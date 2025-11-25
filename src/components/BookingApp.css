@@ -456,11 +456,16 @@
   .app-header {
     padding: 1.25rem 1.5rem;
     position: static; /* Header nicht fixiert auf Tablet */
+    margin-bottom: 1.5rem; /* Abstand zum Content */
   }
 
   .app-header .header-content {
     flex-direction: column;
     gap: 1rem;
+  }
+
+  .sidebar {
+    margin-bottom: 1.5rem; /* Abstand zur Slot-Liste */
   }
 
   .app-header .header-logo {
@@ -497,6 +502,7 @@
   .app-header {
     padding: 1rem;
     position: static; /* Header nicht fixiert auf Mobile */
+    margin-bottom: 1.5rem; /* Abstand zum Content */
   }
 
   .app-header .header-title {
@@ -509,6 +515,14 @@
 
   .app-header p {
     font-size: 0.95rem;
+  }
+
+  .app-content {
+    gap: 1.5rem; /* Mehr Abstand zwischen Sidebar und Main Content */
+  }
+
+  .sidebar {
+    margin-bottom: 1.5rem; /* Abstand zur Slot-Liste */
   }
 
   /* Horizontal Scrolling für Lehrer-Liste */
