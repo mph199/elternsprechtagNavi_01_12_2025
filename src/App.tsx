@@ -4,6 +4,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { BookingApp } from './components/BookingApp'
 import { LoginPage } from './pages/LoginPage';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { AdminTeachers } from './pages/AdminTeachers';
 import { Impressum } from './pages/Impressum';
 import { Datenschutz } from './pages/Datenschutz';
 import { MaintenancePage } from './pages/MaintenancePage';
@@ -11,7 +12,7 @@ import { Footer } from './components/Footer';
 import './App.css'
 
 // Setze auf true um Maintenance-Modus zu aktivieren
-const MAINTENANCE_MODE = true;
+const MAINTENANCE_MODE = false;
 
 function App() {
   // Zeige Maintenance-Seite wenn aktiviert
@@ -34,6 +35,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <AdminDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/teachers" 
+                element={
+                  <ProtectedRoute>
+                    <AdminTeachers />
                   </ProtectedRoute>
                 } 
               />

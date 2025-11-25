@@ -17,7 +17,13 @@ export function AdminDashboard() {
       setLoading(true);
       setError('');
       const data = await api.admin.getBookings();
-      setBookings(data);
+      
+      // Filter bookings for teachers - only show their own
+      const filteredData = user?.role === 'teacher' && user?.teacherId
+        ? data.filter(booking => booking.teacherId === user.teacherId)
+        : data;
+      
+      setBookings(filteredData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Fehler beim Laden der Buchungen');
     } finally {
@@ -27,7 +33,7 @@ export function AdminDashboard() {
 
   useEffect(() => {
     loadBookings();
-  }, []);
+  }, [user]); // Reload when user changes
 
   const handleCancelBooking = async (slotId: number) => {
     if (!confirm('Möchten Sie diese Buchung wirklich stornieren?')) {
@@ -61,7 +67,7 @@ export function AdminDashboard() {
       <header className="admin-header">
         <div className="admin-header-content">
           <div>
-            <h1>BKSB Elternsprechtag Admin</h1>
+            <h1>BKSB Elternsprechtag - Verwaltung</h1>
             <p className="admin-user">Angemeldet als: <strong>{user?.username}</strong></p>
           </div>
           <button onClick={handleLogout} className="logout-button">
@@ -71,10 +77,27 @@ export function AdminDashboard() {
       </header>
 
       <main className="admin-main">
+        {user?.role === 'admin' && (
+          <div className="admin-actions">
+            <button 
+              onClick={() => navigate('/admin/teachers')} 
+              className="admin-action-button"
+            >
+              <span className="action-icon">👨‍🏫</span>
+              <div>
+                <div className="action-title">Lehrkräfte verwalten</div>
+                <div className="action-desc">Lehrkräfte anlegen, bearbeiten und löschen</div>
+              </div>
+            </button>
+          </div>
+        )}
+
         <div className="admin-stats">
           <div className="stat-card">
             <div className="stat-value">{bookings.length}</div>
-            <div className="stat-label">Gebuchte Termine</div>
+            <div className="stat-label">
+              {user?.role === 'teacher' ? 'Meine gebuchten Termine' : 'Gebuchte Termine'}
+            </div>
           </div>
         </div>
 

@@ -21,6 +21,20 @@ export function requireAuth(req, res, next) {
 }
 
 /**
+ * Middleware: Requires admin role
+ * Checks if user is authenticated AND has admin role
+ */
+export function requireAdmin(req, res, next) {
+  if (req.session && req.session.isAuthenticated && req.session.user?.role === 'admin') {
+    return next();
+  }
+  return res.status(403).json({ 
+    error: 'Forbidden', 
+    message: 'Admin access required' 
+  });
+}
+
+/**
  * Verify login credentials
  */
 export async function verifyCredentials(username, password) {

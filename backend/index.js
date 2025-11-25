@@ -3,7 +3,7 @@ import cors from 'cors';
 import session from 'express-session';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
-import { requireAuth } from './middleware/auth.js';
+import { requireAuth, requireAdmin } from './middleware/auth.js';
 import { supabase } from './config/supabase.js';
 
 dotenv.config();
@@ -249,6 +249,112 @@ app.delete('/api/admin/bookings/:slotId', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Error cancelling booking:', error);
     res.status(500).json({ error: 'Failed to cancel booking' });
+  }
+});
+
+// POST /api/admin/teachers - Create new teacher
+app.post('/api/admin/teachers', requireAdmin, async (req, res) => {
+  try {
+    const { name, subject, system } = req.body || {};
+
+    if (!name || !subject || !system) {
+      return res.status(400).json({ error: 'name, subject, and system required' });
+    }
+
+    if (system !== 'dual' && system !== 'vollzeit') {
+      return res.status(400).json({ error: 'system must be "dual" or "vollzeit"' });
+    }
+
+    const { data, error } = await supabase
+      .from('teachers')
+      .insert({ name: name.trim(), subject: subject.trim(), system: system })
+      .select()
+      .single();
+    
+    if (error) throw error;
+
+    res.json({ success: true, teacher: data });
+  } catch (error) {
+    console.error('Error creating teacher:', error);
+    res.status(500).json({ error: 'Failed to create teacher' });
+  }
+});
+
+// PUT /api/admin/teachers/:id - Update teacher
+app.put('/api/admin/teachers/:id', requireAdmin, async (req, res) => {
+  const teacherId = parseInt(req.params.id, 10);
+  
+  if (isNaN(teacherId)) {
+    return res.status(400).json({ error: 'Invalid teacher ID' });
+  }
+
+  try {
+    const { name, subject, system } = req.body || {};
+
+    if (!name || !subject || !system) {
+      return res.status(400).json({ error: 'name, subject, and system required' });
+    }
+
+    if (system !== 'dual' && system !== 'vollzeit') {
+      return res.status(400).json({ error: 'system must be "dual" or "vollzeit"' });
+    }
+
+    const { data, error } = await supabase
+      .from('teachers')
+      .update({ name: name.trim(), subject: subject.trim(), system: system })
+      .eq('id', teacherId)
+      .select()
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Teacher not found' });
+      }
+      throw error;
+    }
+
+    res.json({ success: true, teacher: data });
+  } catch (error) {
+    console.error('Error updating teacher:', error);
+    res.status(500).json({ error: 'Failed to update teacher' });
+  }
+});
+
+// DELETE /api/admin/teachers/:id - Delete teacher
+app.delete('/api/admin/teachers/:id', requireAdmin, async (req, res) => {
+  const teacherId = parseInt(req.params.id, 10);
+  
+  if (isNaN(teacherId)) {
+    return res.status(400).json({ error: 'Invalid teacher ID' });
+  }
+
+  try {
+    // Check if teacher has any slots
+    const { count } = await supabase
+      .from('slots')
+      .select('id', { count: 'exact', head: true })
+      .eq('teacher_id', teacherId);
+
+    if (count && count > 0) {
+      return res.status(400).json({ 
+        error: 'Lehrkraft kann nicht gelöscht werden, da noch Termine existieren. Bitte zuerst alle Termine löschen.' 
+      });
+    }
+
+    const { error } = await supabase
+      .from('teachers')
+      .delete()
+      .eq('id', teacherId);
+    
+    if (error) throw error;
+
+    res.json({ 
+      success: true, 
+      message: 'Teacher deleted successfully' 
+    });
+  } catch (error) {
+    console.error('Error deleting teacher:', error);
+    res.status(500).json({ error: 'Failed to delete teacher' });
   }
 });
 

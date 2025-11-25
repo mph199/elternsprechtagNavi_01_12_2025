@@ -68,16 +68,15 @@ export const BookingApp = () => {
           />
           <div className="header-text">
             <h2 className="header-title">Eltern- und Ausbildersprechtag</h2>
+            <p className="header-date">Mittwoch, 15. Januar 2025 | 16:00 - 18:00 Uhr</p>
             <p>
               Willkommen im Buchungssystem des BKSB für Termine am Eltern- und
               Ausbildersprechtag.
             </p>
-            <p>
-              <a href="/login" className="admin-button">
-                Admin-Login
-              </a>
-            </p>
           </div>
+          <a href="/login" className="admin-button">
+            Login
+          </a>
         </div>
         </div>
       </header>

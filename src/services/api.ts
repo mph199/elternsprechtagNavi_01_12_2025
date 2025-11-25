@@ -4,6 +4,7 @@ export interface ApiTeacher {
   id: number;
   name: string;
   subject: string;
+  system: 'dual' | 'vollzeit';
 }
 
 export interface ApiSlot {
@@ -38,6 +39,8 @@ export interface AuthResponse {
   authenticated: boolean;
   user?: {
     username: string;
+    role: 'admin' | 'teacher';
+    teacherId?: number;
   };
 }
 
@@ -46,6 +49,8 @@ export interface LoginResponse {
   message?: string;
   user?: {
     username: string;
+    role: 'admin' | 'teacher';
+    teacherId?: number;
   };
 }
 
@@ -176,6 +181,58 @@ export const api = {
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Fehler beim Stornieren');
+      }
+
+      return response.json();
+    },
+
+    async createTeacher(teacherData: { name: string; subject: string; system: 'dual' | 'vollzeit' }): Promise<ApiTeacher> {
+      const response = await fetch(`${API_BASE}/admin/teachers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(teacherData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Fehler beim Anlegen der Lehrkraft');
+      }
+
+      const data = await response.json();
+      return data.teacher;
+    },
+
+    async updateTeacher(id: number, teacherData: { name: string; subject: string; system: 'dual' | 'vollzeit' }): Promise<ApiTeacher> {
+      const response = await fetch(`${API_BASE}/admin/teachers/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(teacherData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Fehler beim Aktualisieren der Lehrkraft');
+      }
+
+      const data = await response.json();
+      return data.teacher;
+    },
+
+    async deleteTeacher(id: number): Promise<{ success: boolean }> {
+      const response = await fetch(`${API_BASE}/admin/teachers/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Fehler beim Löschen der Lehrkraft');
       }
 
       return response.json();

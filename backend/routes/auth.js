@@ -1,5 +1,6 @@
 import express from 'express';
 import { verifyCredentials, ADMIN_USER } from '../middleware/auth.js';
+import { supabase } from '../config/supabase.js';
 
 const router = express.Router();
 
@@ -18,24 +19,77 @@ router.post('/login', async (req, res) => {
     });
   }
 
-  const isValid = await verifyCredentials(username, password);
-  
-  if (!isValid) {
-    return res.status(401).json({ 
-      error: 'Unauthorized', 
-      message: 'Invalid credentials' 
+  try {
+    // Check if users table exists and query it
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .limit(1);
+
+    if (error) {
+      // Fallback to hardcoded admin if users table doesn't exist yet
+      console.warn('Users table not found, using fallback admin');
+      const isValid = await verifyCredentials(username, password);
+      
+      if (!isValid) {
+        return res.status(401).json({ 
+          error: 'Unauthorized', 
+          message: 'Invalid credentials' 
+        });
+      }
+
+      req.session.isAuthenticated = true;
+      req.session.user = { username: ADMIN_USER.username, role: 'admin' };
+
+      return res.json({ 
+        success: true, 
+        message: 'Login successful',
+        user: { username: ADMIN_USER.username, role: 'admin' }
+      });
+    }
+
+    if (!users || users.length === 0) {
+      return res.status(401).json({ 
+        error: 'Unauthorized', 
+        message: 'Invalid credentials' 
+      });
+    }
+
+    const user = users[0];
+    
+    // Verify password (implement proper bcrypt comparison later)
+    const isValid = await verifyCredentials(username, password);
+    
+    if (!isValid) {
+      return res.status(401).json({ 
+        error: 'Unauthorized', 
+        message: 'Invalid credentials' 
+      });
+    }
+
+    // Set session with role and teacherId
+    const userData = {
+      username: user.username,
+      role: user.role,
+      teacherId: user.teacher_id || undefined
+    };
+
+    req.session.isAuthenticated = true;
+    req.session.user = userData;
+
+    res.json({ 
+      success: true, 
+      message: 'Login successful',
+      user: userData
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ 
+      error: 'Internal Server Error', 
+      message: 'Login failed' 
     });
   }
-
-  // Set session
-  req.session.isAuthenticated = true;
-  req.session.user = { username: ADMIN_USER.username };
-
-  res.json({ 
-    success: true, 
-    message: 'Login successful',
-    user: { username: ADMIN_USER.username }
-  });
 });
 
 /**

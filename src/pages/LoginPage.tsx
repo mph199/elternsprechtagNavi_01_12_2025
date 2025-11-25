@@ -32,7 +32,7 @@ export function LoginPage() {
       <div className="login-container">
         <div className="login-header">
           <h1>BKSB Elternsprechtag</h1>
-          <h2>Admin Login</h2>
+          <h2>Login</h2>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
@@ -72,7 +72,7 @@ export function LoginPage() {
             className="login-button"
             disabled={loading}
           >
-            {loading ? 'Login läuft...' : 'Anmelden'}
+            {loading ? 'Login läuft...' : 'Login'}
           </button>
         </form>
 

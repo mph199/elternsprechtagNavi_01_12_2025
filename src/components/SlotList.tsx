@@ -46,10 +46,6 @@ export const SlotList = ({
               {slot.booked ? (
                 <div className="slot-status booked-status">
                   <span className="status-badge">Gebucht</span>
-                  <div className="booking-info">
-                    <small>{slot.studentName}</small>
-                    <small>Klasse {slot.className}</small>
-                  </div>
                 </div>
               ) : (
                 <div className="slot-status available-status">

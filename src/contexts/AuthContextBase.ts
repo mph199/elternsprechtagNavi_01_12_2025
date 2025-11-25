@@ -2,6 +2,8 @@ import { createContext } from 'react';
 
 export interface User {
   username: string;
+  role: 'admin' | 'teacher';
+  teacherId?: number; // Nur für Lehrer
 }
 
 export interface AuthContextType {
