@@ -20,21 +20,43 @@ const allowedOrigins = [
   process.env.FRONTEND_URL // Vercel URL
 ].filter(Boolean);
 
+// Flexible CORS: allow configured origins and safe hosted domains
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    try {
+      const o = new URL(origin);
+      const host = o.hostname;
+      const isAllowedList = allowedOrigins.includes(origin);
+      const isLocalhost = host === 'localhost' || host.startsWith('127.');
+      const isVercel = host.endsWith('.vercel.app');
+      const isRender = host.endsWith('.onrender.com');
+      if (isAllowedList || isLocalhost || isVercel || isRender) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    } catch {
+      return callback(new Error('Invalid origin'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
 
 // Session configuration
+// Enable trust proxy for secure cookies behind Render/Vercel proxies
+app.set('trust proxy', 1);
+
+// Configure session cookies for cross-origin usage (Vercel <-> Render)
+const isProduction = process.env.NODE_ENV === 'production' || (process.env.FRONTEND_URL || '').startsWith('https://');
 app.use(session({
   secret: process.env.SESSION_SECRET || 'bksb-elternsprechtag-secret-2024',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Set to true in production with HTTPS
+    secure: isProduction, // requires HTTPS
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite: isProduction ? 'none' : 'lax', // allow cross-site cookies in prod
     maxAge: 8 * 60 * 60 * 1000 // 8 hours
   }
 }));
