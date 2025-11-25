@@ -450,11 +450,12 @@
 @media (max-width: 768px) {
   .booking-app {
     padding: 1.5rem;
-    padding-top: 180px;
+    padding-top: 1.5rem; /* Kein extra Platz für fixierten Header */
   }
 
   .app-header {
     padding: 1.25rem 1.5rem;
+    position: static; /* Header nicht fixiert auf Tablet */
   }
 
   .app-header .header-content {
@@ -490,11 +491,12 @@
 @media (max-width: 640px) {
   .booking-app {
     padding: 1rem;
-    padding-top: 160px;
+    padding-top: 1rem; /* Kein extra Platz für fixierten Header */
   }
 
   .app-header {
     padding: 1rem;
+    position: static; /* Header nicht fixiert auf Mobile */
   }
 
   .app-header .header-title {
@@ -556,7 +558,7 @@
 @media (max-width: 480px) {
   .booking-app {
     padding: 0.75rem;
-    padding-top: 150px;
+    padding-top: 0.75rem;
   }
 
   .app-header .header-title {
@@ -576,7 +578,7 @@
 @media (max-width: 375px) {
   .booking-app {
     padding: 0.5rem;
-    padding-top: 140px;
+    padding-top: 0.5rem;
   }
 
   .app-header {
