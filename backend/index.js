@@ -424,6 +424,159 @@ app.delete('/api/admin/teachers/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// GET /api/admin/settings - Get event settings
+app.get('/api/admin/settings', requireAuth, async (_req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('settings')
+      .select('*')
+      .limit(1)
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No settings found, return default
+        return res.json({
+          id: 1,
+          event_name: 'BKSB Elternsprechtag',
+          event_date: new Date().toISOString().split('T')[0]
+        });
+      }
+      throw error;
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+    res.status(500).json({ error: 'Failed to fetch settings' });
+  }
+});
+
+// PUT /api/admin/settings - Update event settings
+app.put('/api/admin/settings', requireAdmin, async (req, res) => {
+  try {
+    const { event_name, event_date } = req.body || {};
+
+    if (!event_name || !event_date) {
+      return res.status(400).json({ error: 'event_name and event_date required' });
+    }
+
+    // Update or insert settings
+    const { data, error } = await supabase
+      .from('settings')
+      .upsert({ 
+        id: 1, 
+        event_name: event_name.trim(), 
+        event_date,
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+
+    res.json({ success: true, settings: data });
+  } catch (error) {
+    console.error('Error updating settings:', error);
+    res.status(500).json({ error: 'Failed to update settings' });
+  }
+});
+
+// POST /api/admin/slots - Create new slot
+app.post('/api/admin/slots', requireAdmin, async (req, res) => {
+  try {
+    const { teacher_id, time, date } = req.body || {};
+
+    if (!teacher_id || !time || !date) {
+      return res.status(400).json({ error: 'teacher_id, time, and date required' });
+    }
+
+    const { data, error} = await supabase
+      .from('slots')
+      .insert({
+        teacher_id,
+        time: time.trim(),
+        date: date.trim(),
+        booked: false
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+
+    res.json({ success: true, slot: data });
+  } catch (error) {
+    console.error('Error creating slot:', error);
+    res.status(500).json({ error: 'Failed to create slot' });
+  }
+});
+
+// PUT /api/admin/slots/:id - Update slot
+app.put('/api/admin/slots/:id', requireAdmin, async (req, res) => {
+  const slotId = parseInt(req.params.id, 10);
+  
+  if (isNaN(slotId)) {
+    return res.status(400).json({ error: 'Invalid slot ID' });
+  }
+
+  try {
+    const { time, date } = req.body || {};
+
+    if (!time || !date) {
+      return res.status(400).json({ error: 'time and date required' });
+    }
+
+    const { data, error } = await supabase
+      .from('slots')
+      .update({ 
+        time: time.trim(), 
+        date: date.trim(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', slotId)
+      .select()
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Slot not found' });
+      }
+      throw error;
+    }
+
+    res.json({ success: true, slot: data });
+  } catch (error) {
+    console.error('Error updating slot:', error);
+    res.status(500).json({ error: 'Failed to update slot' });
+  }
+});
+
+// DELETE /api/admin/slots/:id - Delete slot
+app.delete('/api/admin/slots/:id', requireAdmin, async (req, res) => {
+  const slotId = parseInt(req.params.id, 10);
+  
+  if (isNaN(slotId)) {
+    return res.status(400).json({ error: 'Invalid slot ID' });
+  }
+
+  try {
+    const { error } = await supabase
+      .from('slots')
+      .delete()
+      .eq('id', slotId);
+    
+    if (error) throw error;
+
+    res.json({ 
+      success: true, 
+      message: 'Slot deleted successfully' 
+    });
+  } catch (error) {
+    console.error('Error deleting slot:', error);
+    res.status(500).json({ error: 'Failed to delete slot' });
+  }
+});
+
 // Health / readiness route
 app.get('/api/health', async (_req, res) => {
   try {

@@ -89,6 +89,26 @@ export function AdminDashboard() {
                 <div className="action-desc">Lehrkräfte anlegen, bearbeiten und löschen</div>
               </div>
             </button>
+            <button 
+              onClick={() => navigate('/admin/settings')} 
+              className="admin-action-button"
+            >
+              <span className="action-icon">⚙️</span>
+              <div>
+                <div className="action-title">Einstellungen</div>
+                <div className="action-desc">Event-Name und Datum konfigurieren</div>
+              </div>
+            </button>
+            <button 
+              onClick={() => navigate('/admin/slots')} 
+              className="admin-action-button"
+            >
+              <span className="action-icon">📅</span>
+              <div>
+                <div className="action-title">Termine verwalten</div>
+                <div className="action-desc">Zeitslots anlegen, bearbeiten und löschen</div>
+              </div>
+            </button>
           </div>
         )}
 

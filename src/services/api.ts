@@ -35,6 +35,14 @@ export interface ApiBooking extends ApiSlot {
   teacherSubject: string;
 }
 
+export interface ApiSettings {
+  id: number;
+  event_name: string;
+  event_date: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface AuthResponse {
   authenticated: boolean;
   user?: {
@@ -233,6 +241,90 @@ export const api = {
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Fehler beim Löschen der Lehrkraft');
+      }
+
+      return response.json();
+    },
+
+    async getSettings(): Promise<ApiSettings> {
+      const response = await fetch(`${API_BASE}/admin/settings`, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Fehler beim Laden der Einstellungen');
+      }
+
+      return response.json();
+    },
+
+    async updateSettings(settings: { event_name: string; event_date: string }): Promise<ApiSettings> {
+      const response = await fetch(`${API_BASE}/admin/settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(settings),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Fehler beim Aktualisieren der Einstellungen');
+      }
+
+      const data = await response.json();
+      return data.settings;
+    },
+
+    async createSlot(slotData: { teacher_id: number; time: string; date: string }): Promise<ApiSlot> {
+      const response = await fetch(`${API_BASE}/admin/slots`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(slotData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Fehler beim Anlegen des Slots');
+      }
+
+      const data = await response.json();
+      return data.slot;
+    },
+
+    async updateSlot(id: number, slotData: { time: string; date: string }): Promise<ApiSlot> {
+      const response = await fetch(`${API_BASE}/admin/slots/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(slotData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Fehler beim Aktualisieren des Slots');
+      }
+
+      const data = await response.json();
+      return data.slot;
+    },
+
+    async deleteSlot(id: number): Promise<{ success: boolean }> {
+      const response = await fetch(`${API_BASE}/admin/slots/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Fehler beim Löschen des Slots');
       }
 
       return response.json();

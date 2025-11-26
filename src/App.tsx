@@ -5,6 +5,8 @@ import { BookingApp } from './components/BookingApp'
 import { LoginPage } from './pages/LoginPage';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminTeachers } from './pages/AdminTeachers';
+import { AdminSettings } from './pages/AdminSettings';
+import { AdminSlots } from './pages/AdminSlots';
 import { Impressum } from './pages/Impressum';
 import { Datenschutz } from './pages/Datenschutz';
 import { MaintenancePage } from './pages/MaintenancePage';
@@ -43,6 +45,22 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <AdminTeachers />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/settings" 
+                element={
+                  <ProtectedRoute>
+                    <AdminSettings />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/slots" 
+                element={
+                  <ProtectedRoute>
+                    <AdminSlots />
                   </ProtectedRoute>
                 } 
               />
