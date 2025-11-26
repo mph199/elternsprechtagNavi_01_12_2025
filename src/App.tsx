@@ -14,7 +14,7 @@ import { Footer } from './components/Footer';
 import './App.css'
 
 // Setze auf true um Maintenance-Modus zu aktivieren
-const MAINTENANCE_MODE = false;
+const MAINTENANCE_MODE = true;
 
 function App() {
   // Zeige Maintenance-Seite wenn aktiviert
