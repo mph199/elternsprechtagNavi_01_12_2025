@@ -83,7 +83,6 @@ export const useBooking = (selectedTeacherId: number | null) => {
     message,
     loading,
     error,
-    lastBookedSlot,
     handleSelectSlot,
     handleBooking,
     resetSelection,
