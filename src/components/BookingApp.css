@@ -415,17 +415,22 @@
   font-size: 0.95rem;
 }
 
-.form-group input {
+.form-group input,
+.form-group select,
+.form-group textarea {
   padding: 0.65rem 0.7rem;
   border: 2px solid rgba(229, 231, 235, 0.6);
   border-radius: 10px;
   font-size: 0.95rem;
+  font-family: inherit;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(4px);
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
   outline: none;
   border-color: #10b981;
   background: rgba(255, 255, 255, 0.95);
@@ -433,6 +438,11 @@
     0 0 0 4px rgba(16, 185, 129, 0.1),
     0 4px 12px rgba(0, 0, 0, 0.05);
   transform: translateY(-1px);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
 }
 
 .form-actions {
