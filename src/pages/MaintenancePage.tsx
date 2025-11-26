@@ -21,9 +21,6 @@ export const MaintenancePage = () => {
             Bitte versuchen Sie es in Kürze erneut.
           </p>
 
-          <a href="/login" className="maintenance-admin-link">
-            Admin-Login
-          </a>
         </div>
       </div>
     </div>
