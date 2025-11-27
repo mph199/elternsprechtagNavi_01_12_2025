@@ -15,13 +15,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const verifyAuth = async () => {
       try {
+        // Nur verifizieren, wenn ein Token vorhanden ist
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          setIsAuthenticated(false);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
         const response = await api.auth.verify();
         if (response.authenticated && response.user) {
           setIsAuthenticated(true);
           setUser(response.user);
+        } else {
+          // Token ist ungültig, entfernen
+          localStorage.removeItem('auth_token');
+          setIsAuthenticated(false);
+          setUser(null);
         }
       } catch (error) {
         console.error('Auth verification failed:', error);
+        // Token ist ungültig, entfernen
+        localStorage.removeItem('auth_token');
         setIsAuthenticated(false);
         setUser(null);
       } finally {
