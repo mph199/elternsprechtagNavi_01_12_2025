@@ -90,9 +90,7 @@ function getAuthHeaders(): HeadersInit {
 
 export const api = {
   async getTeachers(): Promise<ApiTeacher[]> {
-    const response = await fetch(`${API_BASE}/teachers`, {
-      credentials: 'include',
-    });
+    const response = await fetch(`${API_BASE}/teachers`);
     if (!response.ok) {
       throw new Error('Fehler beim Laden der Lehrkräfte');
     }
@@ -101,9 +99,7 @@ export const api = {
   },
 
   async getSlots(teacherId: number): Promise<ApiSlot[]> {
-    const response = await fetch(`${API_BASE}/slots?teacherId=${teacherId}`, {
-      credentials: 'include',
-    });
+    const response = await fetch(`${API_BASE}/slots?teacherId=${teacherId}`);
     if (!response.ok) {
       throw new Error('Fehler beim Laden der Termine');
     }
@@ -120,7 +116,6 @@ export const api = {
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
       body: JSON.stringify({
         slotId,
         ...bookingData,
@@ -136,9 +131,7 @@ export const api = {
   },
 
   async getHealth(): Promise<{ status: string; teacherCount: number; slotCount: number; bookedCount: number }> {
-    const response = await fetch(`${API_BASE}/health`, {
-      credentials: 'include',
-    });
+    const response = await fetch(`${API_BASE}/health`);
     if (!response.ok) {
       throw new Error('Backend nicht erreichbar');
     }
