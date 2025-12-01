@@ -5,6 +5,7 @@ import api from '../services/api';
 import type { TimeSlot as ApiBooking } from '../types';
 import { exportBookingsToICal } from '../utils/icalExport';
 import './AdminDashboard.css';
+import { Breadcrumbs } from '../components/Breadcrumbs';
 
 export function AdminDashboard() {
   const [bookings, setBookings] = useState<ApiBooking[]>([]);
@@ -57,6 +58,7 @@ export function AdminDashboard() {
   if (loading) {
     return (
       <div className="admin-loading">
+        <Breadcrumbs />
         <div className="spinner"></div>
         <p>Laden...</p>
       </div>
@@ -67,8 +69,8 @@ export function AdminDashboard() {
     <div className="admin-dashboard">
       <header className="admin-header">
         <div className="admin-header-content">
+          <Breadcrumbs />
           <div>
-            <h1>BKSB Elternsprechtag - Verwaltung</h1>
             <p className="admin-user">Angemeldet als: <strong>{user?.username}</strong></p>
           </div>
           <div className="header-actions">

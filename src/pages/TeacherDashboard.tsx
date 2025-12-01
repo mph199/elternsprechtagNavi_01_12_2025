@@ -5,6 +5,7 @@ import api from '../services/api';
 import type { TimeSlot, Settings } from '../types';
 import { exportBookingsToICal } from '../utils/icalExport';
 import './AdminDashboard.css';
+import { Breadcrumbs } from '../components/Breadcrumbs';
 
 export function TeacherDashboard() {
   const [bookings, setBookings] = useState<TimeSlot[]>([]);
@@ -57,7 +58,6 @@ export function TeacherDashboard() {
     if (!confirm('Möchten Sie diese Buchung wirklich stornieren?')) {
       return;
     }
-
     try {
       await api.teacher.cancelBooking(slotId);
       await loadBookings();
@@ -125,8 +125,8 @@ export function TeacherDashboard() {
     <div className="admin-dashboard">
       <header className="admin-header">
         <div className="admin-header-content">
+          <Breadcrumbs />
           <div>
-            <h1>Lehrer Dashboard</h1>
             <p className="admin-user">Angemeldet als: <strong>{user?.username}</strong></p>
             {teacher && (
               <p className="admin-user">

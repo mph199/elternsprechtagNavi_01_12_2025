@@ -210,8 +210,8 @@ export const BookingForm = ({
       </form>
 
       {message && (
-        <div 
-          className={`message ${message.includes('erfolgreich') ? 'success' : 'error'}`}
+        <div
+          className={`message ${/erfolgreich|reserviert|bestätig/i.test(message) ? 'success' : 'error'}`}
           role="alert"
           aria-live="polite"
         >

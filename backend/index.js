@@ -5,6 +5,8 @@ import authRoutes from './routes/auth.js';
 import teacherRoutes from './routes/teacher.js';
 import { requireAuth, requireAdmin } from './middleware/auth.js';
 import { supabase } from './config/supabase.js';
+import crypto from 'crypto';
+import { isEmailConfigured, sendMail } from './config/email.js';
 
 dotenv.config();
 
@@ -154,6 +156,10 @@ app.post('/api/bookings', async (req, res) => {
       updateData.trainee_name = traineeName;
     }
 
+    // Prepare verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationSentAt = new Date().toISOString();
+
     const { data, error } = await supabase
       .from('slots')
       .update(updateData)
@@ -168,7 +174,48 @@ app.post('/api/bookings', async (req, res) => {
       }
       throw error;
     }
-    
+    // If reservation succeeded, store verification token fields
+    if (data) {
+      await supabase
+        .from('slots')
+        .update({
+          verification_token: verificationToken,
+          verification_sent_at: verificationSentAt,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', data.id);
+    }
+
+    // Send verification email (best-effort)
+    if (data && isEmailConfigured()) {
+      const baseUrl = process.env.PUBLIC_BASE_URL || 'http://localhost:5173';
+      const verifyUrl = `${baseUrl}/verify?token=${verificationToken}`;
+      const teacherRes = await supabase.from('teachers').select('*').eq('id', data.teacher_id).single();
+      const teacher = teacherRes.data || {};
+      const subject = `Bitte E-Mail bestätigen – Terminreservierung ${teacher.name ? 'bei ' + teacher.name : ''}`;
+      const plain = `Guten Tag,
+
+bitte bestätigen Sie Ihre E-Mail-Adresse, damit wir Ihre Terminreservierung abschließen können.
+
+Termin: ${data.date} ${data.time}
+Lehrkraft: ${teacher.name || '—'}
+
+Bestätigungslink: ${verifyUrl}
+
+Vielen Dank!`;
+      const html = `<p>Guten Tag,</p>
+<p>bitte bestätigen Sie Ihre E-Mail-Adresse, damit wir Ihre Terminreservierung abschließen können.</p>
+<p><strong>Termin:</strong> ${data.date} ${data.time}<br/>
+<strong>Lehrkraft:</strong> ${teacher.name || '—'}</p>
+<p><a href="${verifyUrl}">E-Mail jetzt bestätigen</a></p>
+<p>Vielen Dank!</p>`;
+      try {
+        await sendMail({ to: email, subject, text: plain, html });
+      } catch (e) {
+        console.warn('Sending verification email failed:', e?.message || e);
+      }
+    }
+
     // Map to camelCase for response
     const updatedSlot = {
       id: data.id,
@@ -191,6 +238,65 @@ app.post('/api/bookings', async (req, res) => {
   } catch (error) {
     console.error('Error creating booking:', error);
     res.status(500).json({ error: 'Failed to create booking' });
+  }
+});
+
+// GET /api/bookings/verify/:token - verify email and possibly send confirmation if already accepted
+app.get('/api/bookings/verify/:token', async (req, res) => {
+  const { token } = req.params;
+  if (!token) return res.status(400).json({ error: 'Missing token' });
+
+  try {
+    const { data: slot, error } = await supabase
+      .from('slots')
+      .select('*')
+      .eq('verification_token', token)
+      .eq('booked', true)
+      .single();
+
+    if (error || !slot) {
+      return res.status(404).json({ error: 'Ungültiger oder abgelaufener Link' });
+    }
+
+    // Mark verified
+    const now = new Date().toISOString();
+    await supabase
+      .from('slots')
+      .update({ verified_at: now, updated_at: now })
+      .eq('id', slot.id);
+
+    // If already confirmed and confirmation mail not sent, send now
+    if (slot.status === 'confirmed' && !slot.confirmation_sent_at && isEmailConfigured()) {
+      try {
+        const teacherRes = await supabase.from('teachers').select('*').eq('id', slot.teacher_id).single();
+        const teacher = teacherRes.data || {};
+        const subject = `Bestätigung: Termin am ${slot.date} (${slot.time})`;
+        const plain = `Guten Tag,
+
+Ihre Terminbuchung wurde bestätigt.
+
+Termin: ${slot.date} ${slot.time}
+Lehrkraft: ${teacher.name || '—'}
+Raum: ${teacher.room || '—'}
+
+Bis bald!`;
+        const html = `<p>Guten Tag,</p>
+<p>Ihre Terminbuchung wurde bestätigt.</p>
+<p><strong>Termin:</strong> ${slot.date} ${slot.time}<br/>
+<strong>Lehrkraft:</strong> ${teacher.name || '—'}<br/>
+<strong>Raum:</strong> ${teacher.room || '—'}</p>
+<p>Bis bald!</p>`;
+        await sendMail({ to: slot.email, subject, text: plain, html });
+        await supabase.from('slots').update({ confirmation_sent_at: now, updated_at: now }).eq('id', slot.id);
+      } catch (e) {
+        console.warn('Sending confirmation after verify failed:', e?.message || e);
+      }
+    }
+
+    return res.json({ success: true, message: 'E-Mail bestätigt. Wir informieren Sie bei Bestätigung durch die Lehrkraft.' });
+  } catch (e) {
+    console.error('Error verifying email:', e);
+    return res.status(500).json({ error: 'Verifikation fehlgeschlagen' });
   }
 });
 

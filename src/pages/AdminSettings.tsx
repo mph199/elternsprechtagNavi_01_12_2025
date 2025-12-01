@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/useAuth';
 import api from '../services/api';
 import type { Settings as ApiSettings } from '../types';
 import './AdminDashboard.css';
+import { Breadcrumbs } from '../components/Breadcrumbs';
 
 export function AdminSettings() {
   const [settings, setSettings] = useState<ApiSettings | null>(null);
@@ -64,6 +65,7 @@ export function AdminSettings() {
   if (loading) {
     return (
       <div className="admin-loading">
+        <Breadcrumbs />
         <div className="spinner"></div>
         <p>Laden...</p>
       </div>
@@ -74,8 +76,8 @@ export function AdminSettings() {
     <div className="admin-dashboard">
       <header className="admin-header">
         <div className="admin-header-content">
+          <Breadcrumbs />
           <div>
-            <h1>BKSB Elternsprechtag - Einstellungen</h1>
             <p className="admin-user">Angemeldet als: <strong>{user?.username}</strong></p>
           </div>
           <div className="header-actions">

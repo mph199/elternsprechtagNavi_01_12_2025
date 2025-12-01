@@ -1,6 +1,7 @@
 import express from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../config/supabase.js';
+import { isEmailConfigured, sendMail } from '../config/email.js';
 
 const router = express.Router();
 
@@ -222,6 +223,7 @@ router.put('/bookings/:slotId/accept', requireAuth, requireTeacher, async (req, 
       return res.status(400).json({ error: 'Teacher ID not found in token' });
     }
 
+    // Update status to confirmed
     const { data, error } = await supabase
       .from('slots')
       .update({ status: 'confirmed', updated_at: new Date().toISOString() })
@@ -236,6 +238,34 @@ router.put('/bookings/:slotId/accept', requireAuth, requireTeacher, async (req, 
         return res.status(404).json({ error: 'Slot not found or not booked' });
       }
       throw error;
+    }
+
+    // If visitor already verified and we haven't sent confirmation, send now
+    if (data && data.verified_at && !data.confirmation_sent_at && isEmailConfigured()) {
+      try {
+        const teacherRes = await supabase.from('teachers').select('*').eq('id', teacherId).single();
+        const teacher = teacherRes.data || {};
+        const subject = `Bestätigung: Termin am ${data.date} (${data.time})`;
+        const plain = `Guten Tag,
+
+Ihre Terminbuchung wurde bestätigt.
+
+Termin: ${data.date} ${data.time}
+Lehrkraft: ${teacher.name || '—'}
+Raum: ${teacher.room || '—'}
+
+Bis bald!`;
+        const html = `<p>Guten Tag,</p>
+<p>Ihre Terminbuchung wurde bestätigt.</p>
+<p><strong>Termin:</strong> ${data.date} ${data.time}<br/>
+<strong>Lehrkraft:</strong> ${teacher.name || '—'}<br/>
+<strong>Raum:</strong> ${teacher.room || '—'}</p>
+<p>Bis bald!</p>`;
+        await sendMail({ to: data.email, subject, text: plain, html });
+        await supabase.from('slots').update({ confirmation_sent_at: new Date().toISOString() }).eq('id', data.id);
+      } catch (e) {
+        console.warn('Sending confirmation email failed:', e?.message || e);
+      }
     }
 
     res.json({ success: true, slot: data });

@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/useAuth';
 import api from '../services/api';
 import type { Teacher as ApiTeacher } from '../types';
 import './AdminDashboard.css';
+import { Breadcrumbs } from '../components/Breadcrumbs';
 
 export function AdminTeachers() {
   const [teachers, setTeachers] = useState<ApiTeacher[]>([]);
@@ -101,8 +102,9 @@ export function AdminTeachers() {
   if (loading) {
     return (
       <div className="admin-loading">
+        <Breadcrumbs />
         <div className="spinner"></div>
-        <p>Laden...</p>
+        <p>Lade Lehrkräfte...</p>
       </div>
     );
   }
@@ -111,8 +113,8 @@ export function AdminTeachers() {
     <div className="admin-dashboard">
       <header className="admin-header">
         <div className="admin-header-content">
+          <Breadcrumbs />
           <div>
-            <h1>BKSB Elternsprechtag - Verwaltung</h1>
             <p className="admin-user">Angemeldet als: <strong>{user?.username}</strong></p>
           </div>
           <div className="header-actions">

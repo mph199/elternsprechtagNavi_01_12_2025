@@ -10,6 +10,7 @@ import { AdminSlots } from './pages/AdminSlots';
 import { TeacherDashboard } from './pages/TeacherDashboard';
 import { Impressum } from './pages/Impressum';
 import { Datenschutz } from './pages/Datenschutz';
+import { VerifyEmail } from './pages/VerifyEmail';
 import { MaintenancePage } from './pages/MaintenancePage';
 import { Footer } from './components/Footer';
 import { AppErrorBoundary } from './components/AppErrorBoundary';
@@ -33,6 +34,7 @@ function App() {
               <Route path="/" element={MAINTENANCE_MODE ? <MaintenancePage /> : <BookingApp />} />
               <Route path="/impressum" element={MAINTENANCE_MODE ? <MaintenancePage /> : <Impressum />} />
               <Route path="/datenschutz" element={MAINTENANCE_MODE ? <MaintenancePage /> : <Datenschutz />} />
+              <Route path="/verify" element={<VerifyEmail />} />
               
               {/* Geschützter Teacher-Bereich */}
               <Route 

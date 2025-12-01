@@ -556,6 +556,56 @@
   border: 1px solid #fca5a5;
 }
 
+/* Breadcrumbs */
+.breadcrumbs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  border-radius: 9999px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.breadcrumbs .crumb-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.breadcrumbs .crumb {
+  color: #374151;
+  text-decoration: none;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  transition: background 120ms ease;
+}
+.breadcrumbs .crumb:hover {
+  background: #f3f4f6;
+}
+.breadcrumbs .crumb.home {
+  font-weight: 600;
+}
+.breadcrumbs .sep {
+  color: #9ca3af;
+  margin: 0 0.25rem;
+}
+.breadcrumbs .current {
+  color: #111827;
+  font-weight: 600;
+  background: #f3f4f6;
+}
+
+@media (max-width: 640px) {
+  .breadcrumbs {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.5rem;
+  }
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .app-content {

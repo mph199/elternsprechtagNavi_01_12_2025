@@ -56,7 +56,7 @@ export const useBooking = (selectedTeacherId: number | null) => {
             slot.id === selectedSlotId ? response.updatedSlot! : slot
           )
         );
-        setMessage('Buchung erfolgreich!');
+        setMessage('Termin reserviert – bitte prüfen Sie Ihre E-Mail und bestätigen Sie den Link. Nach Bestätigung erhalten Sie die endgültige Zusage, sobald die Lehrkraft den Termin annimmt.');
         setSelectedSlotId(null);
       } else {
         setMessage(response.message || 'Buchung fehlgeschlagen');

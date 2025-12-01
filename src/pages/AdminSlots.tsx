@@ -5,6 +5,7 @@ import api from '../services/api';
 import type { TimeSlot as ApiSlot, Teacher as ApiTeacher } from '../types';
 import { exportTeacherSlotsToICal } from '../utils/icalExport';
 import './AdminDashboard.css';
+import { Breadcrumbs } from '../components/Breadcrumbs';
 
 export function AdminSlots() {
   const [teachers, setTeachers] = useState<ApiTeacher[]>([]);
@@ -125,11 +126,11 @@ export function AdminSlots() {
     <div className="admin-dashboard">
       <header className="admin-header">
         <div className="admin-header-content">
+          <Breadcrumbs />
           <div>
-            <h1>BKSB Elternsprechtag - Slot-Verwaltung</h1>
             <p className="admin-user">Angemeldet als: <strong>{user?.username}</strong></p>
           </div>
-          <div className="header-actions">
+          <div>
             <button onClick={() => navigate('/')} className="back-button">
               ← Zur Buchungsseite
             </button>
@@ -224,11 +225,13 @@ export function AdminSlots() {
 
         {loading ? (
           <div className="admin-loading">
+            <Breadcrumbs />
             <div className="spinner"></div>
             <p>Laden...</p>
           </div>
         ) : (
           <>
+            <Breadcrumbs />
             {selectedTeacher && (
               <div className="settings-info" style={{ marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
