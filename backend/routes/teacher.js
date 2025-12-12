@@ -3,6 +3,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../config/supabase.js';
 import { isEmailConfigured, sendMail } from '../config/email.js';
 import bcrypt from 'bcryptjs';
+import { mapSlotRow, mapBookingRowWithTeacher } from '../utils/mappers.js';
 
 const router = express.Router();
 
@@ -44,25 +45,7 @@ router.get('/bookings', requireAuth, requireTeacher, async (req, res) => {
     
     if (error) throw error;
     
-    // Map to camelCase with teacher info
-    const bookings = data.map(slot => ({
-      id: slot.id,
-      teacherId: slot.teacher_id,
-      time: slot.time,
-      date: slot.date,
-      booked: slot.booked,
-      status: slot.status,
-      visitorType: slot.visitor_type,
-      parentName: slot.parent_name,
-      companyName: slot.company_name,
-      studentName: slot.student_name,
-      traineeName: slot.trainee_name,
-      className: slot.class_name,
-      email: slot.email,
-      message: slot.message,
-      teacherName: slot.teacher?.name || 'Unknown',
-      teacherSubject: slot.teacher?.subject || 'Unknown'
-    }));
+    const bookings = (data || []).map(mapBookingRowWithTeacher);
   
     res.json({ bookings });
   } catch (error) {
@@ -92,23 +75,7 @@ router.get('/slots', requireAuth, requireTeacher, async (req, res) => {
     
     if (error) throw error;
     
-    // Map snake_case to camelCase
-    const slots = data.map(slot => ({
-      id: slot.id,
-      teacherId: slot.teacher_id,
-      time: slot.time,
-      date: slot.date,
-      booked: slot.booked,
-      status: slot.status,
-      visitorType: slot.visitor_type,
-      parentName: slot.parent_name,
-      companyName: slot.company_name,
-      studentName: slot.student_name,
-      traineeName: slot.trainee_name,
-      className: slot.class_name,
-      email: slot.email,
-      message: slot.message
-    }));
+    const slots = (data || []).map(mapSlotRow);
     
     res.json({ slots });
   } catch (error) {
@@ -181,9 +148,15 @@ router.delete('/bookings/:slotId', requireAuth, requireTeacher, async (req, res)
         company_name: null,
         student_name: null,
         trainee_name: null,
+        representative_name: null,
         class_name: null,
         email: null,
-        message: null
+        message: null,
+        verification_token: null,
+        verification_sent_at: null,
+        verified_at: null,
+        confirmation_sent_at: null,
+        updated_at: new Date().toISOString(),
       })
       .eq('id', slotId)
       .eq('teacher_id', teacherId) // Only allow canceling own bookings
