@@ -8,6 +8,15 @@ import { supabase } from './config/supabase.js';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { isEmailConfigured, sendMail } from './config/email.js';
+import { listTeachers } from './services/teachersService.js';
+import {
+  listSlotsByTeacherId,
+  reserveBooking,
+  verifyBookingToken,
+  listAdminBookings,
+  cancelBookingAdmin,
+} from './services/slotsService.js';
+import { mapSlotRow } from './utils/mappers.js';
 
 dotenv.config();
 
@@ -59,13 +68,8 @@ app.use('/api/teacher', teacherRoutes);
 // GET /api/teachers
 app.get('/api/teachers', async (_req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('teachers')
-      .select('*')
-      .order('id');
-    
-    if (error) throw error;
-    res.json({ teachers: data });
+    const teachers = await listTeachers();
+    res.json({ teachers });
   } catch (error) {
     console.error('Error fetching teachers:', error);
     res.status(500).json({ error: 'Failed to fetch teachers' });
@@ -84,33 +88,7 @@ app.get('/api/slots', async (req, res) => {
       return res.status(400).json({ error: 'teacherId must be a number' });
     }
 
-    const { data, error } = await supabase
-      .from('slots')
-      .select('*')
-      .eq('teacher_id', teacherIdNum)
-      .order('time');
-    
-    if (error) throw error;
-    
-    // Map snake_case to camelCase for frontend compatibility
-    const slots = data.map(slot => ({
-      id: slot.id,
-      teacherId: slot.teacher_id,
-      time: slot.time,
-      date: slot.date,
-      booked: slot.booked,
-      status: slot.status,
-      visitorType: slot.visitor_type,
-      parentName: slot.parent_name,
-      companyName: slot.company_name,
-      studentName: slot.student_name,
-      traineeName: slot.trainee_name,
-      representativeName: slot.representative_name,
-      className: slot.class_name,
-      email: slot.email,
-      message: slot.message
-    }));
-    
+    const slots = await listSlotsByTeacherId(teacherIdNum);
     res.json({ slots });
   } catch (error) {
     console.error('Error fetching slots:', error);
@@ -122,85 +100,21 @@ app.get('/api/slots', async (req, res) => {
 // Body: { slotId, visitorType, parentName, companyName, studentName, traineeName, className, email, message }
 app.post('/api/bookings', async (req, res) => {
   try {
-    const { slotId, visitorType, parentName, companyName, studentName, traineeName, representativeName, className, email, message } = req.body || {};
-
-    if (!slotId || !visitorType || !className || !email) {
-      return res.status(400).json({ error: 'slotId, visitorType, className, email required' });
-    }
-
-    // Validate based on visitor type
-    if (visitorType === 'parent') {
-      if (!parentName || !studentName) {
-        return res.status(400).json({ error: 'parentName and studentName required for parent type' });
-      }
-    } else if (visitorType === 'company') {
-      if (!companyName || !traineeName || !representativeName) {
-        return res.status(400).json({ error: 'companyName, traineeName and representativeName required for company type' });
-      }
-    } else {
-      return res.status(400).json({ error: 'visitorType must be parent or company' });
-    }
-
-    const updateData = {
-      booked: true,
-      status: 'reserved',
-      visitor_type: visitorType,
-      class_name: className,
-      email: email,
-      message: message || null
-    };
-
-    if (visitorType === 'parent') {
-      updateData.parent_name = parentName;
-      updateData.student_name = studentName;
-    } else {
-      updateData.company_name = companyName;
-      updateData.trainee_name = traineeName;
-      updateData.representative_name = representativeName;
-    }
-
-    // Prepare verification token
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    const verificationSentAt = new Date().toISOString();
-
-    const { data, error } = await supabase
-      .from('slots')
-      .update(updateData)
-      .eq('id', slotId)
-      .eq('booked', false) // Prevent double-booking
-      .select()
-      .single();
-    
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return res.status(409).json({ error: 'Slot already booked or not found' });
-      }
-      throw error;
-    }
-    // If reservation succeeded, store verification token fields
-    if (data) {
-      await supabase
-        .from('slots')
-        .update({
-          verification_token: verificationToken,
-          verification_sent_at: verificationSentAt,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', data.id);
-    }
+    const payload = req.body || {};
+    const { slotRow, verificationToken } = await reserveBooking(payload);
 
     // Send verification email (best-effort)
-    if (data && isEmailConfigured()) {
+    if (slotRow && isEmailConfigured()) {
       const baseUrl = process.env.PUBLIC_BASE_URL || 'http://localhost:5173';
       const verifyUrl = `${baseUrl}/verify?token=${verificationToken}`;
-      const teacherRes = await supabase.from('teachers').select('*').eq('id', data.teacher_id).single();
+      const teacherRes = await supabase.from('teachers').select('*').eq('id', slotRow.teacher_id).single();
       const teacher = teacherRes.data || {};
       const subject = `Bitte E-Mail bestätigen – Terminreservierung ${teacher.name ? 'bei ' + teacher.name : ''}`;
       const plain = `Guten Tag,
 
 bitte bestätigen Sie Ihre E-Mail-Adresse, damit wir Ihre Terminreservierung abschließen können.
 
-Termin: ${data.date} ${data.time}
+Termin: ${slotRow.date} ${slotRow.time}
 Lehrkraft: ${teacher.name || '—'}
 
 Bestätigungslink: ${verifyUrl}
@@ -208,40 +122,22 @@ Bestätigungslink: ${verifyUrl}
 Vielen Dank!`;
       const html = `<p>Guten Tag,</p>
 <p>bitte bestätigen Sie Ihre E-Mail-Adresse, damit wir Ihre Terminreservierung abschließen können.</p>
-<p><strong>Termin:</strong> ${data.date} ${data.time}<br/>
+<p><strong>Termin:</strong> ${slotRow.date} ${slotRow.time}<br/>
 <strong>Lehrkraft:</strong> ${teacher.name || '—'}</p>
 <p><a href="${verifyUrl}">E-Mail jetzt bestätigen</a></p>
 <p>Vielen Dank!</p>`;
       try {
-        await sendMail({ to: email, subject, text: plain, html });
+        await sendMail({ to: payload.email, subject, text: plain, html });
       } catch (e) {
         console.warn('Sending verification email failed:', e?.message || e);
       }
     }
 
-    // Map to camelCase for response
-    const updatedSlot = {
-      id: data.id,
-      teacherId: data.teacher_id,
-      time: data.time,
-      date: data.date,
-      booked: data.booked,
-      status: data.status,
-      visitorType: data.visitor_type,
-      parentName: data.parent_name,
-      companyName: data.company_name,
-      studentName: data.student_name,
-      traineeName: data.trainee_name,
-      representativeName: data.representative_name,
-      className: data.class_name,
-      email: data.email,
-      message: data.message
-    };
-    
-    res.json({ success: true, updatedSlot });
+    res.json({ success: true, updatedSlot: mapSlotRow(slotRow) });
   } catch (error) {
     console.error('Error creating booking:', error);
-    res.status(500).json({ error: 'Failed to create booking' });
+    const status = error?.statusCode || 500;
+    res.status(status).json({ error: error?.message || 'Failed to create booking' });
   }
 });
 
@@ -251,23 +147,7 @@ app.get('/api/bookings/verify/:token', async (req, res) => {
   if (!token) return res.status(400).json({ error: 'Missing token' });
 
   try {
-    const { data: slot, error } = await supabase
-      .from('slots')
-      .select('*')
-      .eq('verification_token', token)
-      .eq('booked', true)
-      .single();
-
-    if (error || !slot) {
-      return res.status(404).json({ error: 'Ungültiger oder abgelaufener Link' });
-    }
-
-    // Mark verified
-    const now = new Date().toISOString();
-    await supabase
-      .from('slots')
-      .update({ verified_at: now, updated_at: now })
-      .eq('id', slot.id);
+    const { slotRow: slot, verifiedAt: now } = await verifyBookingToken(token);
 
     // If already confirmed and confirmation mail not sent, send now
     if (slot.status === 'confirmed' && !slot.confirmation_sent_at && isEmailConfigured()) {
@@ -300,7 +180,8 @@ Bis bald!`;
     return res.json({ success: true, message: 'E-Mail bestätigt. Wir informieren Sie bei Bestätigung durch die Lehrkraft.' });
   } catch (e) {
     console.error('Error verifying email:', e);
-    return res.status(500).json({ error: 'Verifikation fehlgeschlagen' });
+    const status = e?.statusCode || 500;
+    return res.status(status).json({ error: e?.message || 'Verifikation fehlgeschlagen' });
   }
 });
 
@@ -308,37 +189,7 @@ Bis bald!`;
 // GET /api/admin/bookings - Get all bookings with teacher info
 app.get('/api/admin/bookings', requireAuth, async (_req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('slots')
-      .select(`
-        *,
-        teacher:teachers(name, subject)
-      `)
-      .eq('booked', true)
-      .order('date')
-      .order('time');
-    
-    if (error) throw error;
-    
-    // Map to camelCase with teacher info
-    const bookings = data.map(slot => ({
-      id: slot.id,
-      teacherId: slot.teacher_id,
-      time: slot.time,
-      date: slot.date,
-      booked: slot.booked,
-      visitorType: slot.visitor_type,
-      parentName: slot.parent_name,
-      companyName: slot.company_name,
-      studentName: slot.student_name,
-      traineeName: slot.trainee_name,
-      className: slot.class_name,
-      email: slot.email,
-      message: slot.message,
-      teacherName: slot.teacher?.name || 'Unknown',
-      teacherSubject: slot.teacher?.subject || 'Unknown'
-    }));
-  
+    const bookings = await listAdminBookings();
     res.json({ bookings });
   } catch (error) {
     console.error('Error fetching bookings:', error);
@@ -356,30 +207,7 @@ app.delete('/api/admin/bookings/:slotId', requireAuth, async (req, res) => {
 
   // Clear booking data with Supabase
   try {
-    const { data, error } = await supabase
-      .from('slots')
-      .update({
-        booked: false,
-        visitor_type: null,
-        parent_name: null,
-        company_name: null,
-        student_name: null,
-        trainee_name: null,
-        class_name: null,
-        email: null,
-        message: null
-      })
-      .eq('id', slotId)
-      .eq('booked', true) // Only cancel if booked
-      .select()
-      .single();
-    
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return res.status(404).json({ error: 'Slot not found or not booked' });
-      }
-      throw error;
-    }
+    await cancelBookingAdmin(slotId);
 
     res.json({ 
       success: true, 
@@ -387,7 +215,8 @@ app.delete('/api/admin/bookings/:slotId', requireAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('Error cancelling booking:', error);
-    res.status(500).json({ error: 'Failed to cancel booking' });
+    const status = error?.statusCode || 500;
+    res.status(status).json({ error: error?.message || 'Failed to cancel booking' });
   }
 });
 
