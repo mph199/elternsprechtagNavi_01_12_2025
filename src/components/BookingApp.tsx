@@ -18,6 +18,10 @@ type ActiveEvent = {
   booking_closes_at?: string | null;
 } | null;
 
+type ActiveEventResponse = {
+  event: Exclude<ActiveEvent, null> | null;
+};
+
 export const BookingApp = () => {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [teachersLoading, setTeachersLoading] = useState<boolean>(true);
@@ -48,7 +52,7 @@ export const BookingApp = () => {
       setEventError('');
       try {
         const res = await api.events.getActive();
-        setActiveEvent((res as any)?.event || null);
+        setActiveEvent((res as ActiveEventResponse).event ?? null);
       } catch (e) {
         setEventError(e instanceof Error ? e.message : 'Fehler beim Laden des Elternsprechtags');
         setActiveEvent(null);
@@ -219,4 +223,3 @@ export const BookingApp = () => {
     </div>
   );
 };
-// Force rebuild
