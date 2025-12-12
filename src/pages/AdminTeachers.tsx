@@ -80,10 +80,12 @@ export function AdminTeachers() {
 
   const handleEdit = (teacher: ApiTeacher) => {
     setEditingTeacher(teacher);
-    setFormData({ 
-      name: teacher.name, 
+    setFormData({
+      name: teacher.name,
       system: teacher.system || 'dual', // Fallback falls system undefined ist
-      room: teacher.room || ''
+      room: teacher.room || '',
+      username: '',
+      password: '',
     });
     setShowForm(true);
   };
@@ -105,7 +107,7 @@ export function AdminTeachers() {
   const handleCancel = () => {
     setShowForm(false);
     setEditingTeacher(null);
-    setFormData({ name: '', system: 'dual', room: '' });
+    setFormData({ name: '', system: 'dual', room: '', username: '', password: '' });
   };
 
   const handleLogout = async () => {

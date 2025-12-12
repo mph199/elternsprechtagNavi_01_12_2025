@@ -31,6 +31,30 @@ export const BookingApp = () => {
   const [activeEvent, setActiveEvent] = useState<ActiveEvent>(null);
   const [eventLoading, setEventLoading] = useState<boolean>(true);
   const [eventError, setEventError] = useState<string>('');
+
+  const formattedEventHeader = useMemo(() => {
+    if (!activeEvent) return '';
+
+    const starts = new Date(activeEvent.starts_at);
+    const ends = new Date(activeEvent.ends_at);
+
+    const weekday = new Intl.DateTimeFormat('de-DE', { weekday: 'long' }).format(starts);
+    const date = new Intl.DateTimeFormat('de-DE', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    }).format(starts);
+    const startTime = new Intl.DateTimeFormat('de-DE', {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(starts);
+    const endTime = new Intl.DateTimeFormat('de-DE', {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(ends);
+
+    return `${weekday}, ${date} | ${startTime} - ${endTime} Uhr`;
+  }, [activeEvent]);
   
   
   const {
@@ -119,7 +143,11 @@ export const BookingApp = () => {
                 <h1 className="brand-title">BKSB Navi</h1>
                 <span className="subpage-badge">Elternsprechtag</span>
               </div>
-              <p className="header-date">Mittwoch, 15. Januar 2025 | 16:00 - 18:00 Uhr</p>
+              {formattedEventHeader ? (
+                <p className="header-date">{formattedEventHeader}</p>
+              ) : (
+                <p className="header-date">Elternsprechtag | Termine folgen</p>
+              )}
               <p>
                 Willkommen im Buchungssystem des BKSB für Termine am Eltern- und
                 Ausbildersprechtag.
@@ -132,25 +160,15 @@ export const BookingApp = () => {
         </div>
       </header>
 
-      {eventLoading ? (
-        <div className="event-banner">
-          <p>Lade Elternsprechtag…</p>
-        </div>
-      ) : eventError ? (
-        <div className="event-banner event-banner-error">
-          <p>{eventError}</p>
-        </div>
-      ) : !activeEvent ? (
-        <div className="event-banner">
-          <p>
-            Buchungen sind aktuell noch nicht freigeschaltet.
-          </p>
-        </div>
-      ) : (
-        <div className="event-banner">
-          <p>
-            Aktiver Elternsprechtag: <strong>{activeEvent.name}</strong>
-          </p>
+      {(eventLoading || eventError || !activeEvent) && (
+        <div className={`event-banner${eventError ? ' event-banner-error' : ''}`}>
+          {eventLoading ? (
+            <p>Lade Elternsprechtag…</p>
+          ) : eventError ? (
+            <p>{eventError}</p>
+          ) : (
+            <p>Buchungen sind aktuell noch nicht freigeschaltet.</p>
+          )}
         </div>
       )}
 

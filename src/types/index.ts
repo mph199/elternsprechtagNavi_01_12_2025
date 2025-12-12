@@ -3,6 +3,7 @@ export interface Teacher {
   name: string;
   subject: string;
   room?: string;
+  system?: 'dual' | 'vollzeit';
 }
 
 export interface TimeSlot {
@@ -12,6 +13,9 @@ export interface TimeSlot {
   date: string;
   booked: boolean;
   status?: 'reserved' | 'confirmed';
+  // Present on some admin/teacher booking list responses
+  teacherName?: string;
+  teacherSubject?: string;
   visitorType?: 'parent' | 'company';
   parentName?: string;
   companyName?: string;
@@ -39,4 +43,5 @@ export interface Settings {
   id?: number;
   event_name: string;
   event_date: string;
+  updated_at?: string;
 }

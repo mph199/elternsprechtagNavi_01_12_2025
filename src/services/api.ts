@@ -147,6 +147,13 @@ const api = {
         body: JSON.stringify(payload),
       });
     },
+    async updateSlot(id: number, payload: any) {
+      return requestJSON(`/admin/slots/${id}`, {
+        method: 'PUT',
+        auth: true,
+        body: JSON.stringify(payload),
+      });
+    },
     async deleteSlot(id: number) {
       return requestJSON(`/admin/slots/${id}`, { method: 'DELETE', auth: true });
     },
