@@ -26,6 +26,7 @@ export function TeacherDashboard() {
   const [teacher, setTeacher] = useState<TeacherInfo | null>(null);
   const [roomDraft, setRoomDraft] = useState<string>('');
   const [savingRoom, setSavingRoom] = useState<boolean>(false);
+  const [showRoomDialog, setShowRoomDialog] = useState<boolean>(false);
   const [query, setQuery] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'parent' | 'company'>('all');
   const { user, logout } = useAuth();
@@ -118,18 +119,18 @@ export function TeacherDashboard() {
     }
   };
 
-  const handleSaveRoom = async () => {
+  const handleSaveRoom = async (): Promise<boolean> => {
     setError('');
     setNotice('');
     if (!teacher) {
       setError('Lehrkraftdaten konnten nicht geladen werden.');
-      return;
+      return false;
     }
 
     const next = roomDraft.trim();
     if (next.length > 60) {
       setError('Raum darf maximal 60 Zeichen lang sein.');
-      return;
+      return false;
     }
 
     try {
@@ -140,8 +141,10 @@ export function TeacherDashboard() {
         setRoomDraft((updated as TeacherInfo).room || '');
       }
       setNotice('Raum gespeichert.');
+      return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Fehler beim Speichern des Raums');
+      return false;
     } finally {
       setSavingRoom(false);
     }
@@ -219,25 +222,115 @@ export function TeacherDashboard() {
       </header>
 
       <main className="admin-main">
+        {showRoomDialog && teacher && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Raum ändern"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setShowRoomDialog(false);
+              }
+            }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 16,
+              zIndex: 1000,
+            }}
+          >
+            <div
+              className="stat-card"
+              style={{
+                width: 'min(560px, 100%)',
+                maxHeight: 'calc(100vh - 32px)',
+                overflow: 'auto',
+              }}
+            >
+              <h3>Raum ändern</h3>
+              <p style={{ marginTop: 0, color: '#555' }}>
+                Hinweis: Räume sollten nur geändert werden, wenn dies zuvor mit dem Sekretariat abgestimmt wurde.
+              </p>
+
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  placeholder="z.B. B204"
+                  value={roomDraft}
+                  onChange={(e) => setRoomDraft(e.target.value)}
+                  style={{ padding: 8, flex: 1, minWidth: 220 }}
+                  aria-label="Neuer Raum"
+                  disabled={savingRoom}
+                  autoFocus
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 12, flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => {
+                    setError('');
+                    setNotice('');
+                    setShowRoomDialog(false);
+                    setRoomDraft(teacher.room || '');
+                  }}
+                  className="back-button"
+                  disabled={savingRoom}
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={async () => {
+                    const ok = await handleSaveRoom();
+                    if (ok) {
+                      setShowRoomDialog(false);
+                    }
+                  }}
+                  className="btn-primary"
+                  disabled={savingRoom}
+                >
+                  {savingRoom ? 'Speichern…' : 'Speichern'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {teacher && (
           <div className="stat-card" style={{ marginBottom: 16 }}>
             <h3>Raum</h3>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-              <input
-                type="text"
-                placeholder="z.B. B204"
-                value={roomDraft}
-                onChange={(e) => setRoomDraft(e.target.value)}
-                style={{ padding: 8, flex: 1, minWidth: 220 }}
-                aria-label="Raum"
-                disabled={savingRoom}
-              />
+              <div>
+                <div style={{ fontSize: 12, color: '#666', marginBottom: 6 }}>Derzeitiger Raum</div>
+                <div
+                  style={{
+                    background: '#eee',
+                    padding: '8px 10px',
+                    borderRadius: 6,
+                    display: 'inline-block',
+                    color: '#333',
+                    minWidth: 120,
+                    textAlign: 'center',
+                  }}
+                >
+                  {teacher.room ? teacher.room : '—'}
+                </div>
+              </div>
+
               <button
-                onClick={handleSaveRoom}
+                onClick={() => {
+                  setError('');
+                  setNotice('');
+                  setRoomDraft(teacher.room || '');
+                  setShowRoomDialog(true);
+                }}
                 className="btn-primary"
                 disabled={savingRoom}
               >
-                {savingRoom ? 'Speichern…' : 'Speichern'}
+                Raumänderung vornehmen
               </button>
             </div>
           </div>
