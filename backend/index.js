@@ -206,23 +206,31 @@ app.post('/api/bookings', async (req, res) => {
       const verifyUrl = `${baseUrl}/verify?token=${verificationToken}`;
       const teacherRes = await supabase.from('teachers').select('*').eq('id', slotRow.teacher_id).single();
       const teacher = teacherRes.data || {};
-      const subject = `Bitte E-Mail bestätigen – Terminreservierung ${teacher.name ? 'bei ' + teacher.name : ''}`;
+      const subject = `BKSB Elternsprechtag – E-Mail-Adresse bestätigen (Terminreservierung)`;
       const plain = `Guten Tag,
 
-bitte bestätigen Sie Ihre E-Mail-Adresse, damit wir Ihre Terminreservierung abschließen können.
+    bitte bestätigen Sie Ihre E-Mail-Adresse, um Ihre Terminreservierung im BKSB-Elternsprechtag-System abzuschließen.
 
-Termin: ${slotRow.date} ${slotRow.time}
-Lehrkraft: ${teacher.name || '—'}
+    Termin: ${slotRow.date} ${slotRow.time}
+    Lehrkraft: ${teacher.name || '—'}
+    Raum: ${teacher.room || '—'}
 
-Bestätigungslink: ${verifyUrl}
+    Bestätigungslink: ${verifyUrl}
 
-Vielen Dank!`;
+    Hinweis: Erst nach erfolgreicher Bestätigung kann die Lehrkraft Ihren Termin verbindlich bestätigen.
+
+    Mit freundlichen Grüßen
+
+    Ihr BKSB-Team`;
       const html = `<p>Guten Tag,</p>
-<p>bitte bestätigen Sie Ihre E-Mail-Adresse, damit wir Ihre Terminreservierung abschließen können.</p>
-<p><strong>Termin:</strong> ${slotRow.date} ${slotRow.time}<br/>
-<strong>Lehrkraft:</strong> ${teacher.name || '—'}</p>
-<p><a href="${verifyUrl}">E-Mail jetzt bestätigen</a></p>
-<p>Vielen Dank!</p>`;
+    <p>bitte bestätigen Sie Ihre E-Mail-Adresse, um Ihre Terminreservierung im BKSB-Elternsprechtag-System abzuschließen.</p>
+    <p><strong>Termin:</strong> ${slotRow.date} ${slotRow.time}<br/>
+    <strong>Lehrkraft:</strong> ${teacher.name || '—'}<br/>
+    <strong>Raum:</strong> ${teacher.room || '—'}</p>
+    <p><a href="${verifyUrl}">E-Mail-Adresse jetzt bestätigen</a></p>
+    <p><strong>Hinweis:</strong> Erst nach erfolgreicher Bestätigung kann die Lehrkraft Ihren Termin verbindlich bestätigen.</p>
+    <p>Mit freundlichen Grüßen</p>
+    <p>Ihr BKSB-Team</p>`;
       try {
         await sendMail({ to: payload.email, subject, text: plain, html });
       } catch (e) {
@@ -251,22 +259,25 @@ app.get('/api/bookings/verify/:token', async (req, res) => {
       try {
         const teacherRes = await supabase.from('teachers').select('*').eq('id', slot.teacher_id).single();
         const teacher = teacherRes.data || {};
-        const subject = `Bestätigung: Termin am ${slot.date} (${slot.time})`;
+        const subject = `BKSB Elternsprechtag – Termin bestätigt am ${slot.date} (${slot.time})`;
         const plain = `Guten Tag,
 
-Ihre Terminbuchung wurde bestätigt.
+      Ihre Terminbuchung wurde durch die Lehrkraft bestätigt.
 
-Termin: ${slot.date} ${slot.time}
-Lehrkraft: ${teacher.name || '—'}
-Raum: ${teacher.room || '—'}
+      Termin: ${slot.date} ${slot.time}
+      Lehrkraft: ${teacher.name || '—'}
+      Raum: ${teacher.room || '—'}
 
-Bis bald!`;
+      Mit freundlichen Grüßen
+
+      Ihr BKSB-Team`;
         const html = `<p>Guten Tag,</p>
-<p>Ihre Terminbuchung wurde bestätigt.</p>
-<p><strong>Termin:</strong> ${slot.date} ${slot.time}<br/>
-<strong>Lehrkraft:</strong> ${teacher.name || '—'}<br/>
-<strong>Raum:</strong> ${teacher.room || '—'}</p>
-<p>Bis bald!</p>`;
+      <p>Ihre Terminbuchung wurde durch die Lehrkraft bestätigt.</p>
+      <p><strong>Termin:</strong> ${slot.date} ${slot.time}<br/>
+      <strong>Lehrkraft:</strong> ${teacher.name || '—'}<br/>
+      <strong>Raum:</strong> ${teacher.room || '—'}</p>
+      <p>Mit freundlichen Grüßen</p>
+      <p>Ihr BKSB-Team</p>`;
         await sendMail({ to: slot.email, subject, text: plain, html });
         await supabase.from('slots').update({ confirmation_sent_at: now, updated_at: now }).eq('id', slot.id);
       } catch (e) {
@@ -312,25 +323,28 @@ app.delete('/api/admin/bookings/:slotId', requireAuth, async (req, res) => {
         const teacherRes = await supabase.from('teachers').select('*').eq('id', previous.teacher_id).single();
         const teacher = teacherRes.data || {};
 
-        const subject = `Stornierung: Termin am ${previous.date} (${previous.time})`;
+        const subject = `BKSB Elternsprechtag – Termin storniert am ${previous.date} (${previous.time})`;
         const plain = `Guten Tag,
 
-Ihr Termin wurde storniert.
+      wir bestätigen Ihnen die Stornierung Ihres Termins.
 
-Termin: ${previous.date} ${previous.time}
-Lehrkraft: ${teacher.name || '—'}
-Raum: ${teacher.room || '—'}
+      Termin: ${previous.date} ${previous.time}
+      Lehrkraft: ${teacher.name || '—'}
+      Raum: ${teacher.room || '—'}
 
-Bei Bedarf können Sie über das Buchungssystem einen neuen Termin buchen.
+      Wenn Sie einen neuen Termin vereinbaren möchten, können Sie dies jederzeit über das Buchungssystem tun.
 
-Viele Grüße`;
+      Mit freundlichen Grüßen
+
+      Ihr BKSB-Team`;
         const html = `<p>Guten Tag,</p>
-<p>Ihr Termin wurde storniert.</p>
-<p><strong>Termin:</strong> ${previous.date} ${previous.time}<br/>
-<strong>Lehrkraft:</strong> ${teacher.name || '—'}<br/>
-<strong>Raum:</strong> ${teacher.room || '—'}</p>
-<p>Bei Bedarf können Sie über das Buchungssystem einen neuen Termin buchen.</p>
-<p>Viele Grüße</p>`;
+      <p>wir bestätigen Ihnen die Stornierung Ihres Termins.</p>
+      <p><strong>Termin:</strong> ${previous.date} ${previous.time}<br/>
+      <strong>Lehrkraft:</strong> ${teacher.name || '—'}<br/>
+      <strong>Raum:</strong> ${teacher.room || '—'}</p>
+      <p>Wenn Sie einen neuen Termin vereinbaren möchten, können Sie dies jederzeit über das Buchungssystem tun.</p>
+      <p>Mit freundlichen Grüßen</p>
+      <p>Ihr BKSB-Team</p>`;
 
         await sendMail({ to: previous.email, subject, text: plain, html });
         await supabase.from('slots').update({ cancellation_sent_at: new Date().toISOString() }).eq('id', slotId);
