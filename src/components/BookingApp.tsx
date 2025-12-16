@@ -153,8 +153,7 @@ export const BookingApp = () => {
                 <p className="header-date">Elternsprechtag | Termine folgen</p>
               )}
               <p>
-                Willkommen im Buchungssystem des BKSB für Termine am Eltern- und
-                Ausbildungsbetriebssprechtag.
+                Willkommen im Buchungssystem für den Eltern- und Ausbildersprechtag am Berufskolleg Kaufmännische Schulen in Bergisch Gladbach.
               </p>
 
               {(eventLoading || eventError || !activeEvent) && (

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Teacher } from '../types';
-import { teacherDisplayName } from '../utils/teacherDisplayName';
+import { teacherDisplayName, teacherGroupKey } from '../utils/teacherDisplayName';
 
 type Props = {
   teachers: Teacher[];
@@ -30,7 +30,7 @@ export function TeacherCombobox({
 
   const listboxId = 'teacher-combobox-listbox';
 
-  const filtered = useMemo(() => {
+  const filteredTeachers = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return teachers;
     return teachers.filter((t) => {
@@ -40,11 +40,38 @@ export function TeacherCombobox({
     });
   }, [teachers, query]);
 
+  const collator = useMemo(() => new Intl.Collator('de', { sensitivity: 'base', numeric: true }), []);
+
+  const options = useMemo(() => {
+    return [...filteredTeachers].sort((l, r) => collator.compare(teacherDisplayName(l), teacherDisplayName(r)));
+  }, [filteredTeachers, collator]);
+
+  const optionIndexById = useMemo(() => {
+    const map = new Map<number, number>();
+    options.forEach((t, idx) => map.set(t.id, idx));
+    return map;
+  }, [options]);
+
+  const grouped = useMemo(() => {
+    const groups: Array<{ key: string; teachers: Teacher[] }> = [];
+    let currentKey: string | null = null;
+    for (const t of options) {
+      const key = teacherGroupKey(t);
+      if (key !== currentKey) {
+        groups.push({ key, teachers: [t] });
+        currentKey = key;
+      } else {
+        groups[groups.length - 1].teachers.push(t);
+      }
+    }
+    return groups;
+  }, [options]);
+
   const activeOptionId = useMemo(() => {
     if (!open) return undefined;
-    if (activeIndex < 0 || activeIndex >= filtered.length) return undefined;
-    return `teacher-combobox-option-${filtered[activeIndex].id}`;
-  }, [open, activeIndex, filtered]);
+    if (activeIndex < 0 || activeIndex >= options.length) return undefined;
+    return `teacher-combobox-option-${options[activeIndex].id}`;
+  }, [open, activeIndex, options]);
 
   useEffect(() => {
     const onMouseDown = (e: MouseEvent) => {
@@ -104,20 +131,20 @@ export function TeacherCombobox({
               if (!open) setOpen(true);
               setActiveIndex((prev) => {
                 const next = prev + 1;
-                return next >= filtered.length ? (filtered.length ? 0 : -1) : next;
+                return next >= options.length ? (options.length ? 0 : -1) : next;
               });
             } else if (e.key === 'ArrowUp') {
               e.preventDefault();
               if (!open) setOpen(true);
               setActiveIndex((prev) => {
                 const next = prev - 1;
-                return next < 0 ? (filtered.length ? filtered.length - 1 : -1) : next;
+                return next < 0 ? (options.length ? options.length - 1 : -1) : next;
               });
             } else if (e.key === 'Enter') {
               if (!open) return;
               e.preventDefault();
-              if (activeIndex >= 0 && activeIndex < filtered.length) {
-                commitSelection(filtered[activeIndex].id);
+              if (activeIndex >= 0 && activeIndex < options.length) {
+                commitSelection(options[activeIndex].id);
               }
             } else if (e.key === 'Escape') {
               if (open) {
@@ -135,32 +162,31 @@ export function TeacherCombobox({
           aria-label="Lehrkraft auswählen"
           disabled={disabled}
         />
-
-        {(query || selectedTeacherId !== null) && (
-          <button
-            type="button"
-            className="btn btn-secondary btn-small teacher-combobox-clear"
-            onClick={() => {
-              setQuery('');
-              setOpen(false);
-              setActiveIndex(-1);
-              if (selectedTeacherId !== null) {
-                onClearSelection();
-              }
-              inputRef.current?.focus();
-            }}
-            aria-label="Auswahl und Suche löschen"
-            disabled={disabled}
-          >
-            Löschen
-          </button>
-        )}
       </div>
 
       {selectedTeacher && (
         <div className="teacher-combobox-selected" aria-live="polite">
           <span className="teacher-combobox-selectedLabel">Ausgewählt:</span>
-          <span className="teacher-combobox-selectedValue">{teacherDisplayName(selectedTeacher)}</span>
+          <span className="teacher-combobox-selectedValueRow">
+            <span className="teacher-combobox-selectedValue">{teacherDisplayName(selectedTeacher)}</span>
+            <button
+              type="button"
+              className="teacher-combobox-selectedClear"
+              onClick={() => {
+                setQuery('');
+                setOpen(false);
+                setActiveIndex(-1);
+                onClearSelection();
+                inputRef.current?.focus();
+              }}
+              aria-label="Auswahl löschen"
+              disabled={disabled}
+            >
+              <span className="teacher-combobox-selectedClearIcon" aria-hidden="true">
+                ×
+              </span>
+            </button>
+          </span>
 
           {selectedTeacher.room && (
             <>
@@ -181,28 +207,46 @@ export function TeacherCombobox({
       {open && !disabled && (
         <div className="teacher-combobox-popover">
           <ul id={listboxId} role="listbox" className="teacher-combobox-list">
-            {filtered.length === 0 ? (
+            {options.length === 0 ? (
               <li className="teacher-combobox-empty" aria-live="polite">
                 Keine Treffer
               </li>
             ) : (
-              filtered.map((t, idx) => (
-                <li
-                  key={t.id}
-                  id={`teacher-combobox-option-${t.id}`}
-                  role="option"
-                  aria-selected={selectedTeacherId === t.id}
-                  className={`teacher-combobox-option${idx === activeIndex ? ' active' : ''}${selectedTeacherId === t.id ? ' selected' : ''}`}
-                  onMouseEnter={() => setActiveIndex(idx)}
-                  onMouseDown={(e) => {
-                    // Prevent input blur before click
-                    e.preventDefault();
-                  }}
-                  onClick={() => commitSelection(t.id)}
-                >
-                  {teacherDisplayName(t)}
-                </li>
-              ))
+              grouped.flatMap((g) => {
+                const header = (
+                  <li
+                    key={`teacher-combobox-group-${g.key}`}
+                    className="teacher-combobox-section"
+                    role="presentation"
+                    aria-hidden="true"
+                  >
+                    {g.key}
+                  </li>
+                );
+
+                const items = g.teachers.map((t) => {
+                  const idx = optionIndexById.get(t.id) ?? -1;
+                  return (
+                    <li
+                      key={t.id}
+                      id={`teacher-combobox-option-${t.id}`}
+                      role="option"
+                      aria-selected={selectedTeacherId === t.id}
+                      className={`teacher-combobox-option${idx === activeIndex ? ' active' : ''}${selectedTeacherId === t.id ? ' selected' : ''}`}
+                      onMouseEnter={() => setActiveIndex(idx)}
+                      onMouseDown={(e) => {
+                        // Prevent input blur before click
+                        e.preventDefault();
+                      }}
+                      onClick={() => commitSelection(t.id)}
+                    >
+                      {teacherDisplayName(t)}
+                    </li>
+                  );
+                });
+
+                return [header, ...items];
+              })
             )}
           </ul>
         </div>

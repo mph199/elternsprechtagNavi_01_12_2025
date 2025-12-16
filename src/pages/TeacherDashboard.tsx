@@ -202,17 +202,16 @@ export function TeacherDashboard() {
   };
 
   return (
-    <div className="admin-dashboard">
+    <div className="admin-dashboard admin-dashboard--teacher">
       <header className="admin-header">
-        <div className="admin-header-content">
+        <div className="admin-header-content admin-header-content--teacher">
           <Breadcrumbs />
-          <div>
+          <div className="admin-header-meta">
             <p className="admin-user">Angemeldet als: <strong>{user?.username}</strong></p>
             {teacher && (
               <p className="admin-user">
-                {teacher.name} • {teacher.subject}
+                {teacher.name}
                 {teacher.room ? ` • Raum ${teacher.room}` : ''}
-                {teacher.system ? ` • System: ${teacher.system}` : ''}
               </p>
             )}
           </div>
@@ -220,13 +219,10 @@ export function TeacherDashboard() {
             <button onClick={() => navigate('/')} className="back-button">
               ← Zur Buchungsseite
             </button>
-            <button onClick={loadBookings} className="logout-button" style={{ backgroundColor: '#2d5016' }}>
-              Aktualisieren
-            </button>
             <button onClick={() => setShowPasswordForm(v => !v)} className="logout-button" style={{ backgroundColor: '#444' }}>
               Passwort ändern
             </button>
-            <button onClick={handleLogout} className="logout-button">
+            <button onClick={handleLogout} className="logout-button logout-button-danger">
               Abmelden
             </button>
           </div>

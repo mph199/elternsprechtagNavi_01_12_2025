@@ -7,7 +7,7 @@ import { requireAuth, requireAdmin } from './middleware/auth.js';
 import { supabase } from './config/supabase.js';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import { isEmailConfigured, sendMail } from './config/email.js';
+import { isEmailConfigured, sendMail, getLastEmailDebugInfo } from './config/email.js';
 import { listTeachers } from './services/teachersService.js';
 import {
   listSlotsByTeacherId,
@@ -83,6 +83,16 @@ app.use('/api/auth', authRoutes);
 app.use('/api/teacher', teacherRoutes);
 
 // Public Routes
+// Dev helper: fetch last email preview URL (Ethereal)
+app.get('/api/dev/email/last', (req, res) => {
+  const transport = (process.env.MAIL_TRANSPORT || '').trim().toLowerCase();
+  const allow = transport === 'ethereal' && process.env.NODE_ENV !== 'production';
+  if (!allow) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  return res.json({ email: getLastEmailDebugInfo() });
+});
+
 // GET /api/teachers
 app.get('/api/teachers', async (_req, res) => {
   try {

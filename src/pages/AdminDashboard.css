@@ -1,6 +1,42 @@
 .admin-dashboard {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  /* Background: white base with subtle green accents (variant of booking page) */
+  background-color: #ffffff;
+  background-image:
+    radial-gradient(circle at 16% 14%, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0) 58%),
+    radial-gradient(circle at 92% 26%, rgba(5, 150, 105, 0.10) 0%, rgba(5, 150, 105, 0) 56%),
+    linear-gradient(135deg, #f0fdf4 0%, #ffffff 60%, #dcfce7 100%);
+  background-attachment: fixed;
+}
+
+/* Admin dashboard gets a slightly stronger line pattern */
+.admin-dashboard--admin {
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      rgba(16, 185, 129, 0.06) 0px,
+      rgba(16, 185, 129, 0.06) 1px,
+      rgba(16, 185, 129, 0) 1px,
+      rgba(16, 185, 129, 0) 28px
+    ),
+    radial-gradient(circle at 16% 14%, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0) 58%),
+    radial-gradient(circle at 92% 26%, rgba(5, 150, 105, 0.10) 0%, rgba(5, 150, 105, 0) 56%),
+    linear-gradient(135deg, #f0fdf4 0%, #ffffff 60%, #dcfce7 100%);
+}
+
+/* Teacher dashboard gets a softer pattern and slightly different blob placement */
+.admin-dashboard--teacher {
+  background-image:
+    repeating-linear-gradient(
+      135deg,
+      rgba(16, 185, 129, 0.045) 0px,
+      rgba(16, 185, 129, 0.045) 1px,
+      rgba(16, 185, 129, 0) 1px,
+      rgba(16, 185, 129, 0) 26px
+    ),
+    radial-gradient(circle at 18% 18%, rgba(16, 185, 129, 0.10) 0%, rgba(16, 185, 129, 0) 60%),
+    radial-gradient(circle at 86% 78%, rgba(5, 150, 105, 0.10) 0%, rgba(5, 150, 105, 0) 56%),
+    linear-gradient(135deg, #f0fdf4 0%, #ffffff 62%, #dcfce7 100%);
 }
 
 .admin-header {
@@ -27,6 +63,26 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 12px;
+}
+
+/* Teacher dashboard header: keep actions on one row on wider screens */
+.admin-header-content--teacher {
+  flex-wrap: nowrap;
+}
+
+.admin-header-meta {
+  flex: 1 1 auto;
+  min-width: 260px;
+}
+
+.admin-header-content--teacher .header-actions {
+  margin-left: auto;
+}
+
+@media (max-width: 960px) {
+  .admin-header-content--teacher {
+    flex-wrap: wrap;
+  }
 }
 
 .admin-header h1 {
@@ -60,6 +116,19 @@
 .logout-button:hover {
   background: white;
   color: #10b981;
+}
+
+/* Red variant (used for teacher logout) */
+.logout-button.logout-button-danger {
+  background: #dc3545;
+  border-color: #dc3545;
+  color: white;
+}
+
+.logout-button.logout-button-danger:hover {
+  background: #c82333;
+  border-color: #c82333;
+  color: white;
 }
 
 /* Ensure edit buttons inside action rows retain green gradient */

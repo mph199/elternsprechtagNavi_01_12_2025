@@ -36,6 +36,26 @@ Backend email is enabled if SMTP is configured (see `backend/config/email.js`). 
 
 If SMTP is not configured, `sendMail(...)` is skipped (best-effort).
 
+### Dev/testing without a real email account (Ethereal)
+
+For local development you can test the full booking flow (including verification / confirmation / cancellation emails)
+without configuring a real SMTP mailbox.
+
+Set this env var for the backend:
+
+- `MAIL_TRANSPORT=ethereal`
+
+Behavior:
+
+- The backend creates an ephemeral Nodemailer Ethereal test account automatically.
+- Every outgoing email prints a **preview URL** to the backend console (`[email] Preview URL: ...`).
+- No real email is delivered; you open the preview URL in your browser.
+
+Optional convenience endpoint (dev-only):
+
+- If `MAIL_TRANSPORT=ethereal` and `NODE_ENV` is not `production`, you can fetch the last preview URL via:
+  - `GET /api/dev/email/last`
+
 ## Where emails are sent
 
 ### 1) Verification email (double opt-in)

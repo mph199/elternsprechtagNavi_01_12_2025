@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/useAuth';
 import api from '../services/api';
 import type { TimeSlot as ApiSlot, Teacher as ApiTeacher } from '../types';
 import { exportTeacherSlotsToICal } from '../utils/icalExport';
-import { teacherDisplayName } from '../utils/teacherDisplayName';
+import { teacherDisplayName, teacherGroupKey } from '../utils/teacherDisplayName';
 import './AdminDashboard.css';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 
@@ -206,11 +206,28 @@ export function AdminSlots() {
               maxWidth: '400px'
             }}
           >
-            {teachers.map((teacher) => (
-              <option key={teacher.id} value={teacher.id}>
-                {teacherDisplayName(teacher)} - {teacher.system === 'vollzeit' ? 'Vollzeit' : 'Dual'}
-              </option>
-            ))}
+              {(() => {
+                const collator = new Intl.Collator('de', { sensitivity: 'base', numeric: true });
+                const sorted = [...teachers].sort((l, r) => collator.compare(teacherDisplayName(l), teacherDisplayName(r)));
+                const groups = new Map<string, typeof sorted>();
+                for (const t of sorted) {
+                  const key = teacherGroupKey(t);
+                  const list = groups.get(key);
+                  if (list) list.push(t);
+                  else groups.set(key, [t]);
+                }
+
+                const entries = [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0], 'de'));
+                return entries.map(([key, list]) => (
+                  <optgroup key={`tg-${key}`} label={key}>
+                    {list.map((teacher) => (
+                      <option key={teacher.id} value={teacher.id}>
+                        {teacherDisplayName(teacher)} - {teacher.system === 'vollzeit' ? 'Vollzeit' : 'Dual'}
+                      </option>
+                    ))}
+                  </optgroup>
+                ));
+              })()}
           </select>
         </div>
 

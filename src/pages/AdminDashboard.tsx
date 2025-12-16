@@ -166,7 +166,7 @@ export function AdminDashboard() {
   }
 
   return (
-    <div className="admin-dashboard">
+    <div className="admin-dashboard admin-dashboard--admin">
       <header className="admin-header">
         <div className="admin-header-content">
           <Breadcrumbs />
