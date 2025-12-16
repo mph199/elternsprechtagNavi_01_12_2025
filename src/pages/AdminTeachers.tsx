@@ -22,6 +22,7 @@ export function AdminTeachers() {
   const [editingTeacher, setEditingTeacher] = useState<ApiTeacher | null>(null);
   const [formData, setFormData] = useState({ name: '', email: '', salutation: 'Herr' as 'Herr' | 'Frau' | 'Divers', system: 'dual' as 'dual' | 'vollzeit', room: '', username: '', password: '' });
   const [createdCreds, setCreatedCreds] = useState<{ username: string; tempPassword: string } | null>(null);
+  const [systemSaving, setSystemSaving] = useState<Record<number, boolean>>({});
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -120,6 +121,37 @@ export function AdminTeachers() {
     setShowForm(false);
     setEditingTeacher(null);
     setFormData({ name: '', email: '', salutation: 'Herr', system: 'dual', room: '', username: '', password: '' });
+  };
+
+  const handleInlineSystemChange = async (teacher: ApiTeacher, nextSystem: 'dual' | 'vollzeit') => {
+    const currentSystem: 'dual' | 'vollzeit' = teacher.system || 'dual';
+    if (currentSystem === nextSystem) return;
+
+    // Backend update requires these fields; if missing, fall back to edit form.
+    if (!teacher.email || !teacher.salutation) {
+      alert('Bitte erst über "Bearbeiten" E-Mail und Anrede setzen, bevor das System geändert werden kann.');
+      return;
+    }
+
+    setSystemSaving((prev) => ({ ...prev, [teacher.id]: true }));
+    setTeachers((prev) => prev.map((t) => (t.id === teacher.id ? { ...t, system: nextSystem } : t)));
+
+    try {
+      await api.admin.updateTeacher(teacher.id, {
+        name: teacher.name,
+        email: teacher.email,
+        salutation: teacher.salutation,
+        subject: teacher.subject || 'Sprechstunde',
+        system: nextSystem,
+        room: teacher.room || '',
+      });
+    } catch (err) {
+      // Revert optimistic update
+      setTeachers((prev) => prev.map((t) => (t.id === teacher.id ? { ...t, system: currentSystem } : t)));
+      alert(err instanceof Error ? err.message : 'Fehler beim Aktualisieren des Systems');
+    } finally {
+      setSystemSaving((prev) => ({ ...prev, [teacher.id]: false }));
+    }
   };
 
   const handleLogout = async () => {
@@ -371,7 +403,19 @@ export function AdminTeachers() {
                     <td className="teacher-name">{teacher.name}</td>
                     <td>{teacher.salutation || '-'}</td>
                     <td>{teacher.email || '-'}</td>
-                    <td>{teacher.system === 'vollzeit' ? 'Vollzeit' : 'Dual'}</td>
+                    <td>
+                      <select
+                        className="admin-table-select"
+                        value={(teacher.system || 'dual') as 'dual' | 'vollzeit'}
+                        onChange={(e) => handleInlineSystemChange(teacher, e.target.value as 'dual' | 'vollzeit')}
+                        disabled={!!systemSaving[teacher.id]}
+                        aria-label={`System für ${teacher.name}`}
+                        title={systemSaving[teacher.id] ? 'Speichere…' : undefined}
+                      >
+                        <option value="dual">Dual</option>
+                        <option value="vollzeit">Vollzeit</option>
+                      </select>
+                    </td>
                     <td>{teacher.system === 'vollzeit' ? '17:00 - 19:00 Uhr' : '16:00 - 18:00 Uhr'}</td>
                     <td>{teacher.room || '-'}</td>
                     <td>

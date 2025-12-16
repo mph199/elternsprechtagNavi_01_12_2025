@@ -48,3 +48,9 @@ export interface Settings {
   event_date: string;
   updated_at?: string;
 }
+
+export interface FeedbackItem {
+  id: number;
+  message: string;
+  created_at: string;
+}

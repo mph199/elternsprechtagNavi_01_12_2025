@@ -104,6 +104,24 @@ app.get('/api/teachers', async (_req, res) => {
   }
 });
 
+// GET /api/admin/feedback - List anonymous teacher feedback (admin only)
+app.get('/api/admin/feedback', requireAdmin, async (_req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('feedback')
+      .select('id, message, created_at')
+      .order('created_at', { ascending: false })
+      .limit(200);
+
+    if (error) throw error;
+
+    return res.json({ feedback: data || [] });
+  } catch (error) {
+    console.error('Error fetching feedback:', error);
+    return res.status(500).json({ error: 'Failed to fetch feedback' });
+  }
+});
+
 // GET /api/slots?teacherId=1
 app.get('/api/slots', async (req, res) => {
   try {

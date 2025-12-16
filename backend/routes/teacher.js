@@ -172,6 +172,36 @@ router.put('/room', requireAuth, requireTeacher, async (req, res) => {
 });
 
 /**
+ * POST /api/teacher/feedback
+ * Body: { message: string }
+ * Stores anonymous feedback (no teacher reference) for admin review.
+ */
+router.post('/feedback', requireAuth, requireTeacher, async (req, res) => {
+  try {
+    const message = typeof req.body?.message === 'string' ? req.body.message.trim() : '';
+    if (!message) {
+      return res.status(400).json({ error: 'Bitte eine Nachricht eingeben.' });
+    }
+    if (message.length > 2000) {
+      return res.status(400).json({ error: 'Nachricht darf maximal 2000 Zeichen lang sein.' });
+    }
+
+    const { data, error } = await supabase
+      .from('feedback')
+      .insert({ message })
+      .select('id, message, created_at')
+      .single();
+
+    if (error) throw error;
+
+    return res.json({ success: true, feedback: data });
+  } catch (error) {
+    console.error('Error creating feedback:', error);
+    return res.status(500).json({ error: 'Feedback konnte nicht gespeichert werden.' });
+  }
+});
+
+/**
  * DELETE /api/teacher/bookings/:slotId
  * Cancel a booking (teacher can cancel their own bookings)
  */

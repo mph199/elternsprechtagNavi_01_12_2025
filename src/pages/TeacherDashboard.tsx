@@ -29,6 +29,9 @@ export function TeacherDashboard() {
   const [showRoomDialog, setShowRoomDialog] = useState<boolean>(false);
   const [query, setQuery] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'parent' | 'company'>('all');
+  const [feedbackMessage, setFeedbackMessage] = useState<string>('');
+  const [sendingFeedback, setSendingFeedback] = useState<boolean>(false);
+  const [showFeedbackForm, setShowFeedbackForm] = useState<boolean>(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -158,6 +161,32 @@ export function TeacherDashboard() {
       return false;
     } finally {
       setSavingRoom(false);
+    }
+  };
+
+  const handleSubmitFeedback = async () => {
+    setError('');
+    setNotice('');
+
+    const message = feedbackMessage.trim();
+    if (!message) {
+      setError('Bitte eine Nachricht eingeben.');
+      return;
+    }
+    if (message.length > 2000) {
+      setError('Nachricht darf maximal 2000 Zeichen lang sein.');
+      return;
+    }
+
+    try {
+      setSendingFeedback(true);
+      await api.teacher.submitFeedback(message);
+      setFeedbackMessage('');
+      setNotice('Vielen Dank! Feedback wurde anonym übermittelt.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Feedback konnte nicht gesendet werden.');
+    } finally {
+      setSendingFeedback(false);
     }
   };
 
@@ -333,6 +362,7 @@ export function TeacherDashboard() {
             </div>
           </div>
         )}
+
         {(error || notice) && (
           <div className={error ? 'admin-error' : 'admin-success'} style={{ marginBottom: 16 }}>
             {error || notice}
@@ -523,6 +553,60 @@ export function TeacherDashboard() {
                 </tbody>
               </table>
              </div>
+          )}
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setShowFeedbackForm((v) => !v)}
+            >
+              💬 Feedback
+            </button>
+          </div>
+
+          {showFeedbackForm && (
+            <div className="stat-card" style={{ marginTop: 12, marginBottom: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                <h3 style={{ margin: 0 }}>Feedback</h3>
+                <button
+                  type="button"
+                  className="btn-secondary btn-secondary--sm"
+                  onClick={() => setShowFeedbackForm(false)}
+                  disabled={sendingFeedback}
+                >
+                  Schließen
+                </button>
+              </div>
+
+              <p style={{ marginTop: 10, marginBottom: 12, color: '#555', lineHeight: 1.35 }}>
+                Ihre Nachricht wird anonym an die Administration weitergeleitet.
+              </p>
+
+              <div className="form-group" style={{ marginBottom: 12 }}>
+                <label htmlFor="teacherFeedbackMessage">Nachricht</label>
+                <textarea
+                  id="teacherFeedbackMessage"
+                  value={feedbackMessage}
+                  onChange={(e) => setFeedbackMessage(e.target.value)}
+                  placeholder="Was klappt gut? Was fehlt? Was sollten wir verbessern?"
+                  disabled={sendingFeedback}
+                  rows={4}
+                  style={{ width: '100%', padding: '10px 12px', resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleSubmitFeedback}
+                  disabled={sendingFeedback}
+                >
+                  {sendingFeedback ? 'Senden…' : 'Anonym senden'}
+                </button>
+              </div>
+            </div>
           )}
         </section>
       </main>

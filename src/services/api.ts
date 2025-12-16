@@ -193,6 +193,12 @@ const api = {
         body: JSON.stringify(payload),
       });
     },
+
+    // Feedback (anonymous)
+    async listFeedback() {
+      const res = await requestJSON('/admin/feedback', { auth: true });
+      return (res && (res as any).feedback) || [];
+    },
   },
 
   // Teacher endpoints
@@ -229,6 +235,14 @@ const api = {
         method: 'PUT',
         auth: true,
         body: JSON.stringify({ currentPassword, newPassword }),
+      });
+    },
+
+    async submitFeedback(message: string) {
+      return requestJSON('/teacher/feedback', {
+        method: 'POST',
+        auth: true,
+        body: JSON.stringify({ message }),
       });
     },
   },

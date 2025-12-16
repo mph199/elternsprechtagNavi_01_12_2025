@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/useAuth';
 import api from '../services/api';
-import type { TimeSlot as ApiBooking } from '../types';
+import type { TimeSlot as ApiBooking, FeedbackItem } from '../types';
 import { exportBookingsToICal } from '../utils/icalExport';
 import './AdminDashboard.css';
 import { Breadcrumbs } from '../components/Breadcrumbs';
@@ -31,6 +31,10 @@ export function AdminDashboard() {
   const [bookings, setBookings] = useState<ApiBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
+  const [feedbackLoading, setFeedbackLoading] = useState<boolean>(false);
+  const [feedbackError, setFeedbackError] = useState<string>('');
+  const [feedbackOpen, setFeedbackOpen] = useState<boolean>(false);
   const [activeEvent, setActiveEvent] = useState<ActiveEvent | null>(null);
   const [activeEventStats, setActiveEventStats] = useState<EventStats | null>(null);
   const [activeEventStatsError, setActiveEventStatsError] = useState<string>('');
@@ -93,6 +97,25 @@ export function AdminDashboard() {
     }
   }, []);
 
+  const loadFeedback = useCallback(async () => {
+    if (user?.role !== 'admin') {
+      setFeedback([]);
+      setFeedbackError('');
+      return;
+    }
+    try {
+      setFeedbackLoading(true);
+      setFeedbackError('');
+      const items = await api.admin.listFeedback();
+      setFeedback((items || []) as FeedbackItem[]);
+    } catch (e) {
+      setFeedback([]);
+      setFeedbackError(e instanceof Error ? e.message : 'Fehler beim Laden des Feedbacks');
+    } finally {
+      setFeedbackLoading(false);
+    }
+  }, [user?.role]);
+
   useEffect(() => {
     loadBookings();
   }, [loadBookings]);
@@ -100,6 +123,10 @@ export function AdminDashboard() {
   useEffect(() => {
     loadActiveEvent();
   }, [loadActiveEvent]);
+
+  useEffect(() => {
+    loadFeedback();
+  }, [loadFeedback]);
 
   useEffect(() => {
     if (user?.role !== 'admin') {
@@ -250,6 +277,64 @@ export function AdminDashboard() {
                 <div className="action-desc">Zeitslots anlegen, bearbeiten und löschen</div>
               </div>
             </button>
+          </div>
+        )}
+
+        {user?.role === 'admin' && (
+          <div className="teacher-form-container" style={{ marginBottom: '1.25rem' }}>
+            <div className="admin-feedback-header">
+              <h3 className="admin-feedback-title">Feedback (anonym)</h3>
+              <div className="admin-feedback-actions">
+                <button
+                  type="button"
+                  className="btn-secondary btn-secondary--sm"
+                  onClick={() => setFeedbackOpen((v) => !v)}
+                  aria-expanded={feedbackOpen}
+                  aria-controls="admin-feedback-panel"
+                >
+                  {feedbackOpen ? 'Ausblenden' : 'Anzeigen'}
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary btn-secondary--sm"
+                  onClick={loadFeedback}
+                  disabled={feedbackLoading}
+                >
+                  {feedbackLoading ? 'Laden…' : 'Aktualisieren'}
+                </button>
+              </div>
+            </div>
+
+            {feedbackOpen && (
+              <div id="admin-feedback-panel">
+                {feedbackError && <div className="admin-error">{feedbackError}</div>}
+
+                {!feedbackError && (feedbackLoading ? (
+                  <div style={{ color: '#555' }}>Lade Feedback…</div>
+                ) : feedback.length === 0 ? (
+                  <div style={{ color: '#555' }}>Noch kein Feedback vorhanden.</div>
+                ) : (
+                  <div className="bookings-table-container" style={{ marginTop: 10 }}>
+                    <table className="bookings-table">
+                      <thead>
+                        <tr>
+                          <th>Datum</th>
+                          <th>Nachricht</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {feedback.map((f) => (
+                          <tr key={f.id}>
+                            <td>{formatDateTime(f.created_at) || f.created_at}</td>
+                            <td className="message-cell">{f.message}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
