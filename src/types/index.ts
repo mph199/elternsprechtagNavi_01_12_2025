@@ -54,3 +54,12 @@ export interface FeedbackItem {
   message: string;
   created_at: string;
 }
+
+export interface UserAccount {
+  id: number;
+  username: string;
+  role: 'admin' | 'teacher' | 'user';
+  teacher_id?: number | null;
+  created_at?: string;
+  updated_at?: string;
+}

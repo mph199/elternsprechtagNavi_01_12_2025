@@ -25,7 +25,9 @@ Dieser Leitfaden hilft KI-Assistenzsystemen (und neuen Entwickler:innen), sich s
 
 ## Architektur & Schlüsseldateien
 - `src/App.tsx`: Routing-Setup, Protected-Routes für Admin/Teacher.
-- `src/main.tsx`: Root-Render; aktuell ohne globalen Toast-/Error-Provider.
+- `src/main.tsx`: Root-Render; aktuell ohne globalen Toast-Provider.
+- `src/components/AppErrorBoundary.tsx`: Globale ErrorBoundary um die App-Routen (in `App.tsx` aktiv verdrahtet).
+- `src/pages/MaintenancePage.tsx`: Wartungsseite; kann per Env-Flag aktiviert werden.
 - `src/components/BookingApp.tsx`: Haupt-UI, Lehrerfilter, Slotliste, Booking-Flow.
 - `src/components/BookingForm.tsx`: Formular für Buchungen; validiert je nach Besuchertyp.
 - `src/hooks/useBooking.ts`: State-Management für Slots, Auswahl und Buchungslogik; liefert `message` für UI-Hinweise.
@@ -34,14 +36,16 @@ Dieser Leitfaden hilft KI-Assistenzsystemen (und neuen Entwickler:innen), sich s
 - Backend:
   - `backend/index.js`: Express-App, öffentliche/Admin/Teacher-Routen.
   - `backend/routes/auth.js`: Login/Logout/Verify, JWT-Issuance (mit `teacherId` bei Lehrern).
-  - `backend/routes/teacher.js`: Geschützte Lehrer-Endpoints (Bookings, Slots, Cancel).
+  - `backend/routes/teacher.js`: Geschützte Lehrer-Endpoints (Bookings, Slots, Cancel, Accept, Password, Room, Feedback).
   - `backend/middleware/auth.js`: JWT-Validierung, Rollen-Checks.
 
-Hinweis: Ein globaler Toast-Provider und ErrorBoundary sind aktuell nicht implementiert. UI-Hinweise laufen über `useBooking().message`. Falls benötigt, kann ein `ToastProvider` später ergänzt und in `main.tsx` um App gelegt werden.
+Hinweis: Ein globaler Toast-Provider ist aktuell nicht implementiert. UI-Hinweise laufen primär über `useBooking().message`. Falls benötigt, kann ein `ToastProvider` später ergänzt und in `main.tsx` um App gelegt werden.
+
+Hinweis (Wartungsmodus): Das Frontend kann per Env `VITE_MAINTENANCE_MODE=true|1|yes` in den Wartungsmodus geschaltet werden. Der Login bleibt dabei erreichbar.
 
 ## Routing
-- Öffentlich: `/` (BookingApp), `/login`, `/impressum`, `/datenschutz`
-- Geschützt: `/admin/*` (Dashboard, Lehrer, Slots, Settings), `/teacher/*` (Buchungen der Lehrkraft)
+- Öffentlich: `/` (BookingApp), `/login`, `/impressum`, `/datenschutz`, `/verify` (E-Mail-Bestätigung)
+- Geschützt: `/admin/*` (Dashboard, Lehrkräfte, Slots, Elternsprechtage), `/teacher/*` (Dashboard der Lehrkraft)
 - Catch-All: `*` → Redirect auf `/`
 
 ## Authentifizierung
@@ -52,33 +56,54 @@ Hinweis: Ein globaler Toast-Provider und ErrorBoundary sind aktuell nicht implem
 ## API-Verträge (vereinheitlichte Antworten)
 - Öffentlich:
   - `GET /api/teachers` → `{ teachers: Teacher[] }`
-  - `GET /api/slots?teacherId=...` → `{ slots: Slot[] }`
-  - `POST /api/bookings` → `{ success: boolean, updatedSlot?: Slot, message?: string }`
+  - `GET /api/slots?teacherId=...&eventId=...` → `{ slots: Slot[] }` (optional `eventId`; sonst wird der aktuell veröffentlichte Elternsprechtag verwendet)
+  - `POST /api/bookings` → `{ success: boolean, updatedSlot?: Slot, message?: string }` (Buchungen sind nur möglich, wenn ein aktives, veröffentlichtes Event existiert)
+  - `GET /api/events/active` → `{ event: Event | null }`
 - Admin:
   - `GET /api/admin/bookings` → `{ bookings: Booking[] }`
   - `DELETE /api/admin/bookings/:slotId` → `{ success: boolean }`
+  - `GET /api/admin/users` → `{ users: { id, username, role, teacher_id, created_at, updated_at }[] }`
+  - `PATCH /api/admin/users/:id` → `{ success: boolean, user: { ... } }` (Role-Update; erlaubt: `admin` | `teacher`)
+  - `GET /api/admin/slots` → `{ slots: Slot[] }` (optional `teacherId`, `eventId`, `booked`, `limit`)
   - `POST /api/admin/slots` | `PUT /api/admin/slots/:id` | `DELETE /api/admin/slots/:id`
   - `GET/POST/PUT/DELETE /api/admin/teachers` → CRUD für Lehrkräfte
   - `GET/PUT /api/admin/settings` → Admin-Einstellungen
+  - `GET/POST/PUT/DELETE /api/admin/events` → CRUD für Events
+  - `GET /api/admin/events/:id/stats` → Slot-Statistik
+  - `POST /api/admin/events/:id/generate-slots` → Slots für ein Event generieren
 - Teacher:
   - `GET /api/teacher/bookings` → `{ bookings: Booking[] }`
   - `GET /api/teacher/slots` → `{ slots: Slot[] }`
   - `DELETE /api/teacher/bookings/:slotId` → `{ success: boolean }`
+  - `PUT /api/teacher/bookings/:slotId/accept` → `{ success: boolean }`
+  - `PUT /api/teacher/password` → `{ success: boolean }`
+  - `GET /api/teacher/info` → `{ teacher: ... }`
+  - `PUT /api/teacher/room` → `{ success: boolean, teacher: ... }`
+  - `POST /api/teacher/feedback` → `{ success: boolean, feedback: ... }`
+
+Hinweis (Admin-Endpoints): Admin-Endpunkte sind serverseitig mit `requireAdmin` abgesichert. Wichtig: Die `role` steckt im JWT → Rollenwechsel werden erst nach erneutem Login wirksam.
+
+Hinweis (DB-Schema): In manchen Umgebungen fehlte `users.updated_at`. Das wird über eine Migration nachgezogen (`backend/migrations/add_users_updated_at.sql`) inkl. Trigger, der `updated_at` bei Updates automatisch setzt.
+
+Hinweis: In der UI werden Slots typischerweise über die öffentlichen Slots pro Lehrkraft (`GET /api/slots?teacherId=...`) geladen; zusätzlich existiert für Admins ein Slot-Listing über `GET /api/admin/slots`.
 
 ## UX-Patterns
 - Breadcrumb-Header: „BKSB Buchungssystem / Elternsprechtag“ (in `BookingApp`-Header/Breadcrumbs abbilden).
 - Hinweise/Toasts:
   - Aktuell: Anzeigen über `useBooking().message` im UI.
   - Optional/Geplant: `showToast(text, type?, durationMs?)` – Typ: `success|error|info`. Standard 5s; sticky via `durationMs=0`.
-- Fehlerbehandlung: Globaler ErrorBoundary ist derzeit nicht aktiv; komponentenlokale Fehlerbehandlung nutzen.
+- Fehlerbehandlung: `AppErrorBoundary` ist in `App.tsx` aktiv und fängt Render-Fehler in den Routen ab; komponentenlokale Fehlerbehandlung bleibt trotzdem sinnvoll (z.B. für API-Fehlerzustände).
 
 ## Häufige Aufgaben für KI-Agents
 - Buchungsflow anpassen:
   - Änderungen in `useBooking.ts` (Logik) und `BookingForm.tsx` (UI/Validierung).
   - Erfolg/Fehler im UI über `message` anzeigen; optional künftige Toast-API nutzen.
+  - Event-Logik beachten: Buchungen/Slots sind an den aktiven Elternsprechtag gekoppelt (Backend) und werden optional per `eventId` gescoped.
 - Admin-Slots:
   - CRUD in `src/pages/AdminSlots.tsx`; nutze `api.admin.*` Methoden.
   - Erfolg/Fehler via klare UI-Meldungen (später Toaster möglich).
+- Admin-Events:
+  - `src/pages/AdminEvents.tsx`: Events verwalten, Slots generieren, Status (draft/published/closed) setzen.
 - Teacher-Dashboard:
   - `src/pages/TeacherDashboard.tsx`; Storno via `api.teacher.cancelBooking` und danach `load()`.
 

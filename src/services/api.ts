@@ -199,6 +199,20 @@ const api = {
       const res = await requestJSON('/admin/feedback', { auth: true });
       return (res && (res as any).feedback) || [];
     },
+
+    // Users / Roles
+    async getUsers() {
+      const res = await requestJSON('/admin/users', { auth: true });
+      return (res && (res as any).users) || [];
+    },
+    async updateUserRole(id: number, role: 'admin' | 'teacher') {
+      const res = await requestJSON(`/admin/users/${id}`, {
+        method: 'PATCH',
+        auth: true,
+        body: JSON.stringify({ role }),
+      });
+      return (res && (res as any).user) || null;
+    },
   },
 
   // Teacher endpoints

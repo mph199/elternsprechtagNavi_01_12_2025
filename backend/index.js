@@ -295,7 +295,7 @@ app.get('/api/bookings/verify/:token', async (req, res) => {
 
 // Admin Routes (Protected)
 // GET /api/admin/bookings - Get all bookings with teacher info
-app.get('/api/admin/bookings', requireAuth, async (_req, res) => {
+app.get('/api/admin/bookings', requireAdmin, async (_req, res) => {
   try {
     const bookings = await listAdminBookings();
     res.json({ bookings });
@@ -306,7 +306,7 @@ app.get('/api/admin/bookings', requireAuth, async (_req, res) => {
 });
 
 // DELETE /api/admin/bookings/:slotId - Cancel a booking
-app.delete('/api/admin/bookings/:slotId', requireAuth, async (req, res) => {
+app.delete('/api/admin/bookings/:slotId', requireAdmin, async (req, res) => {
   const slotId = parseInt(req.params.slotId, 10);
   
   if (isNaN(slotId)) {
@@ -361,6 +361,74 @@ app.delete('/api/admin/bookings/:slotId', requireAuth, async (req, res) => {
     console.error('Error cancelling booking:', error);
     const status = error?.statusCode || 500;
     res.status(status).json({ error: error?.message || 'Failed to cancel booking' });
+  }
+});
+
+// GET /api/admin/users - List login users (admin only)
+app.get('/api/admin/users', requireAdmin, async (_req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, username, role, teacher_id, created_at, updated_at')
+      .order('id');
+
+    if (error) throw error;
+    return res.json({ users: data || [] });
+  } catch (error) {
+    console.error('Error fetching admin users:', error);
+    return res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// PATCH /api/admin/users/:id - Update user role (admin only)
+app.patch('/api/admin/users/:id', requireAdmin, async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  if (isNaN(userId)) {
+    return res.status(400).json({ error: 'Invalid user ID' });
+  }
+
+  const { role } = req.body || {};
+  const roleStr = String(role || '').trim();
+  if (roleStr !== 'admin' && roleStr !== 'teacher') {
+    return res.status(400).json({ error: 'role must be "admin" or "teacher"' });
+  }
+
+  // Best-effort safety: prevent an admin from demoting themselves.
+  try {
+    if (req.user?.username) {
+      const { data: me, error: meErr } = await supabase
+        .from('users')
+        .select('id, role')
+        .eq('username', req.user.username)
+        .limit(1)
+        .maybeSingle();
+      if (!meErr && me && Number(me.id) === userId && roleStr !== 'admin') {
+        return res.status(400).json({ error: 'You cannot remove your own admin role.' });
+      }
+    }
+  } catch {
+    // ignore safety check failures
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .update({ role: roleStr })
+      .eq('id', userId)
+      .select('id, username, role, teacher_id, created_at, updated_at')
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      throw error;
+    }
+
+    return res.json({ success: true, user: data });
+  } catch (error) {
+    console.error('Error updating admin user role:', error);
+    return res.status(500).json({ error: 'Failed to update user' });
   }
 });
 
@@ -800,6 +868,63 @@ app.put('/api/admin/settings', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error updating settings:', error);
     res.status(500).json({ error: 'Failed to update settings' });
+  }
+});
+
+// GET /api/admin/slots - List slots (admin only)
+// Optional query: teacherId, eventId (number | "null"), booked ("true"|"false"), limit
+app.get('/api/admin/slots', requireAdmin, async (req, res) => {
+  try {
+    const { teacherId, eventId, booked, limit } = req.query;
+
+    let q = supabase
+      .from('slots')
+      .select('*')
+      .order('date')
+      .order('time');
+
+    if (teacherId !== undefined) {
+      const teacherIdNum = parseInt(String(teacherId), 10);
+      if (isNaN(teacherIdNum)) {
+        return res.status(400).json({ error: 'teacherId must be a number' });
+      }
+      q = q.eq('teacher_id', teacherIdNum);
+    }
+
+    if (eventId !== undefined) {
+      const raw = String(eventId);
+      if (raw === 'null') {
+        q = q.is('event_id', null);
+      } else {
+        const eventIdNum = parseInt(raw, 10);
+        if (isNaN(eventIdNum)) {
+          return res.status(400).json({ error: 'eventId must be a number or "null"' });
+        }
+        q = q.eq('event_id', eventIdNum);
+      }
+    }
+
+    if (booked !== undefined) {
+      const raw = String(booked).toLowerCase();
+      if (raw !== 'true' && raw !== 'false') {
+        return res.status(400).json({ error: 'booked must be "true" or "false"' });
+      }
+      q = q.eq('booked', raw === 'true');
+    }
+
+    const limitNum = limit !== undefined ? parseInt(String(limit), 10) : 2000;
+    if (isNaN(limitNum) || limitNum < 1 || limitNum > 10000) {
+      return res.status(400).json({ error: 'limit must be between 1 and 10000' });
+    }
+    q = q.limit(limitNum);
+
+    const { data, error } = await q;
+    if (error) throw error;
+
+    return res.json({ slots: (data || []).map(mapSlotRow) });
+  } catch (error) {
+    console.error('Error fetching admin slots:', error);
+    return res.status(500).json({ error: 'Failed to fetch slots' });
   }
 });
 

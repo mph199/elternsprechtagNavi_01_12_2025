@@ -697,6 +697,137 @@
   background: #f3f4f6;
 }
 
+/* AdminUsers page polish */
+.admin-users-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.admin-users-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-users-stats {
+  display: flex;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.admin-users-stat {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(229, 231, 235, 0.9);
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  min-width: 104px;
+}
+
+.admin-users-stat__label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #065f46;
+}
+
+.admin-users-stat__value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #111827;
+  margin-top: 2px;
+}
+
+.admin-users-controls {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 0.9rem;
+  align-items: end;
+  flex: 1;
+  min-width: 320px;
+}
+
+.admin-users-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.admin-users-username {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.admin-users-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.16rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #065f46;
+  background: rgba(16, 185, 129, 0.14);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.admin-role-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.18rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  border: 1px solid transparent;
+}
+
+.admin-role-pill--admin {
+  color: #7c2d12;
+  background: rgba(251, 146, 60, 0.18);
+  border-color: rgba(251, 146, 60, 0.35);
+}
+
+.admin-role-pill--teacher {
+  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.14);
+  border-color: rgba(59, 130, 246, 0.28);
+}
+
+.admin-users-action {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.admin-users-saving {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #6b7280;
+}
+
+.admin-users-row--self td {
+  background: rgba(16, 185, 129, 0.05);
+}
+
+@media (max-width: 980px) {
+  .admin-users-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .admin-users-controls {
+    grid-template-columns: 1fr;
+    min-width: 0;
+  }
+}
+
 /* Ensure inline action buttons align nicely inside table cells */
 .edit-button,
 .cancel-button {

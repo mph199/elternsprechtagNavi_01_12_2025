@@ -277,6 +277,16 @@ export function AdminDashboard() {
                 <div className="action-desc">Zeitslots anlegen, bearbeiten und löschen</div>
               </div>
             </button>
+            <button 
+              onClick={() => navigate('/admin/users')} 
+              className="admin-action-button"
+            >
+              <span className="action-icon">👤</span>
+              <div>
+                <div className="action-title">Benutzer & Rechte</div>
+                <div className="action-desc">Adminrechte vergeben und entziehen</div>
+              </div>
+            </button>
           </div>
         )}
 
