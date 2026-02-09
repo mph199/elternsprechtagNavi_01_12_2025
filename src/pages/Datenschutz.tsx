@@ -69,7 +69,7 @@ export const Datenschutz = () => {
           
           <h3>Buchung von Sprechterminen</h3>
           <p>
-            Bei der Buchung eines Elternsprechtags erheben wir folgende Daten:
+            Bei der Buchung eines Eltern- und Ausbildersprechtags erheben wir folgende Daten:
           </p>
           <ul>
             <li>Name der erziehungsberechtigten Person</li>
@@ -82,7 +82,7 @@ export const Datenschutz = () => {
             (Wahrnehmung einer Aufgabe im öffentlichen Interesse) in Verbindung mit den schulrechtlichen Bestimmungen.
           </p>
           <p>
-            <strong>Speicherdauer:</strong> Die Daten werden nach Abschluss des Elternsprechtags und erfolgter 
+            <strong>Speicherdauer:</strong> Die Daten werden nach Abschluss des Eltern- und Ausbildersprechtags und erfolgter 
             Dokumentation gelöscht, spätestens jedoch nach [X Monaten].
           </p>
         </section>

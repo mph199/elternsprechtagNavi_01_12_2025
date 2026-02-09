@@ -115,7 +115,7 @@ export function AdminFeedback() {
                   <span>Lehrkräfte verwalten</span>
                 </button>
                 <button type="button" className="dropdown__item" onClick={() => { navigate('/admin/events'); close(); }}>
-                  <span>Elternsprechtage verwalten</span>
+                  <span>Eltern- und Ausbildersprechtage verwalten</span>
                 </button>
                 <button type="button" className="dropdown__item" onClick={() => { navigate('/admin/slots'); close(); }}>
                   <span>Slots verwalten</span>

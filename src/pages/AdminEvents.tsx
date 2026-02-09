@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/useAuth';
 import api from '../services/api';
 import './AdminDashboard.css';
-import { Sidebar } from '../components/Sidebar';
-import { Header } from '../components/Header';
 
 type AdminEvent = {
   id: number;
@@ -74,8 +71,7 @@ export function AdminEvents() {
   const [slotMinutes, setSlotMinutes] = useState<number>(15);
   const [replaceExisting, setReplaceExisting] = useState<boolean>(true);
 
-  const { user, logout, activeView, setActiveView } = useAuth();
-  const navigate = useNavigate();
+  const { user, setActiveView } = useAuth();
 
   const canSwitchView = Boolean(user?.role === 'admin' && user.teacherId);
 
@@ -101,11 +97,6 @@ export function AdminEvents() {
     loadEvents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -222,95 +213,9 @@ export function AdminEvents() {
 
   return (
     <div className="admin-dashboard">
-      <Header
-        sectionLabel="Admin · Elternsprechtage verwalten"
-        userLabel={user?.fullName || user?.username}
-        menu={
-          <Sidebar
-            label="Menü"
-            ariaLabel="Menü"
-            variant="icon"
-            side="left"
-            noWrapper
-            buttonClassName="expHeader__menuLines"
-          >
-            {({ close }) => (
-              <>
-                <div className="dropdown__sectionTitle">Aktionen</div>
-                <button type="button" className="dropdown__item" onClick={() => { navigate('/admin'); close(); }}>
-                  <span>Übersicht öffnen</span>
-                </button>
-                <button type="button" className="dropdown__item" onClick={() => { navigate('/admin/teachers'); close(); }}>
-                  <span>Lehrkräfte verwalten</span>
-                </button>
-                <button type="button" className="dropdown__item dropdown__item--active" onClick={() => { navigate('/admin/events'); close(); }}>
-                  <span>Elternsprechtage verwalten</span>
-                  <span className="dropdown__hint">Aktiv</span>
-                </button>
-                <button type="button" className="dropdown__item" onClick={() => { navigate('/admin/slots'); close(); }}>
-                  <span>Slots verwalten</span>
-                </button>
-                <button type="button" className="dropdown__item" onClick={() => { navigate('/admin/users'); close(); }}>
-                  <span>Benutzer & Rechte verwalten</span>
-                </button>
-                <button type="button" className="dropdown__item" onClick={() => { navigate('/admin/feedback'); close(); }}>
-                  <span>Feedback einsehen</span>
-                </button>
-
-                {canSwitchView && (
-                  <>
-                    <div className="dropdown__divider" role="separator" />
-                    <div className="dropdown__sectionTitle">Ansicht</div>
-                    <button
-                      type="button"
-                      className={activeView === 'teacher' ? 'dropdown__item dropdown__item--active' : 'dropdown__item'}
-                      onClick={() => {
-                        setActiveView('teacher');
-                        navigate('/teacher/bookings', { replace: true });
-                        close();
-                      }}
-                    >
-                      <span>Lehrkraft</span>
-                      {activeView === 'teacher' && <span className="dropdown__hint">Aktiv</span>}
-                    </button>
-                    <button
-                      type="button"
-                      className={activeView !== 'teacher' ? 'dropdown__item dropdown__item--active' : 'dropdown__item'}
-                      onClick={() => {
-                        setActiveView('admin');
-                        navigate('/admin', { replace: true });
-                        close();
-                      }}
-                    >
-                      <span>Admin</span>
-                      {activeView !== 'teacher' && <span className="dropdown__hint">Aktiv</span>}
-                    </button>
-                  </>
-                )}
-
-                <div className="dropdown__divider" role="separator" />
-                <button type="button" className="dropdown__item" onClick={() => { navigate('/'); close(); }}>
-                  <span>Zur Buchungsseite</span>
-                </button>
-                <button
-                  type="button"
-                  className="dropdown__item dropdown__item--danger"
-                  onClick={() => {
-                    close();
-                    handleLogout();
-                  }}
-                >
-                  <span>Abmelden</span>
-                </button>
-              </>
-            )}
-          </Sidebar>
-        }
-      />
-
       <main className="admin-main">
         <div className="admin-section-header">
-          <h2>Elternsprechtage verwalten</h2>
+          <h2>Eltern- und Ausbildersprechtage verwalten</h2>
         </div>
 
         {error && <div className="admin-error">{error}</div>}
@@ -326,7 +231,7 @@ export function AdminEvents() {
                 type="text"
                 value={createData.name}
                 onChange={(e) => setCreateData({ ...createData, name: e.target.value })}
-                placeholder="z.B. Elternsprechtag Februar 2026"
+                placeholder="z.B. Eltern- und Ausbildersprechtag Februar 2026"
                 required
               />
             </div>

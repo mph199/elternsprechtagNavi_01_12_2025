@@ -53,7 +53,7 @@ export const BookingApp = () => {
       minute: '2-digit',
     }).format(ends);
 
-    return `${weekday}, ${date} | ${startTime} - ${endTime} Uhr`;
+    return `${weekday}, ${date} | ${startTime}–${endTime} Uhr`;
   }, [activeEvent]);
   
   
@@ -78,7 +78,7 @@ export const BookingApp = () => {
         const res = await api.events.getActive();
         setActiveEvent((res as ActiveEventResponse).event ?? null);
       } catch (e) {
-        setEventError(e instanceof Error ? e.message : 'Fehler beim Laden des Elternsprechtags');
+        setEventError(e instanceof Error ? e.message : 'Fehler beim Laden des Eltern- und Ausbildersprechtags');
         setActiveEvent(null);
       } finally {
         setEventLoading(false);
@@ -139,41 +139,45 @@ export const BookingApp = () => {
           </div>
         </div>
       )}
-      <header className="app-header">
-        <div className="header-inner">
-          <div className="header-content">
-            <div className="header-text">
-              <div className="brand">
-                <h1 className="brand-title">BKSB Buchungssystem</h1>
-                <span className="subpage-badge">Elternsprechtag</span>
+
+      <section className="welcomeWindow" aria-label="Willkommen">
+        <div className="welcomeWindow__inner">
+          <div className="welcomeWindow__grid">
+            <div className="welcomeWindow__main">
+              <div className="welcomeWindow__headlineRow">
+                <h1 className="welcomeWindow__title">Herzlich willkommen!</h1>
               </div>
-              {formattedEventHeader ? (
-                <p className="header-date">{formattedEventHeader}</p>
-              ) : (
-                <p className="header-date">Elternsprechtag | Termine folgen</p>
-              )}
-              <p>
-                Willkommen im Buchungssystem für den Eltern- und Ausbildersprechtag am Berufskolleg Kaufmännische Schulen in Bergisch Gladbach.
+
+              <p className="welcomeWindow__text">
+                Über dieses Portal können Sie Termine für den Eltern- und Ausbildersprechtag am BKSB bequem online anfragen.
               </p>
 
+              <p className="welcomeWindow__text">
+                Wählen Sie die gewünschte Lehrkraft aus, klicken Sie auf einen freien Termin und senden Sie Ihre Anfrage ab.
+              </p>
+
+              <div className="welcomeWindow__eventLine" aria-label="Termin">
+                {formattedEventHeader ? formattedEventHeader : 'Termine folgen'}
+              </div>
+
               {(eventLoading || eventError || !activeEvent) && (
-                <div className={`header-notice${eventError ? ' header-notice-error' : ''}`} role="status">
-                  {eventLoading ? (
-                    'Lade Elternsprechtag…'
-                  ) : eventError ? (
-                    eventError
-                  ) : (
-                    'Buchungen sind aktuell noch nicht freigeschaltet.'
-                  )}
+                <div className={`welcomeWindow__notice${eventError ? ' is-error' : ''}`} role="status">
+                  {eventLoading ? 'Lade Eltern- und Ausbildersprechtag…' : eventError ? eventError : 'Buchungen sind aktuell noch nicht freigeschaltet.'}
                 </div>
               )}
             </div>
-            <a href="/login" className="admin-button">
-              Login
-            </a>
+
+            <aside className="welcomeWindow__side" aria-label="Kurzanleitung">
+              <h2 className="welcomeWindow__sideTitle">In drei Schritten zum Termin:</h2>
+              <ol className="welcomeWindow__steps">
+                <li>Lehrkraft auswählen</li>
+                <li>Freien Slot anklicken</li>
+                <li>Daten eingeben und Anfrage senden</li>
+              </ol>
+            </aside>
           </div>
         </div>
-      </header>
+      </section>
 
       <div className="app-content">
         <aside className="sidebar">

@@ -168,9 +168,9 @@ export function TeacherBookings() {
         </div>
       </div>
 
-      <section className="admin-section">
-        <div className="admin-section-header">
-          <h2>Meine Buchungen</h2>
+      <section className="stat-card" style={{ padding: '1.1rem 1.1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: '1rem' }}>
+          <h3 style={{ margin: 0 }}>Meine Buchungen</h3>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             <button onClick={exportICal} className="btn-primary" disabled={bookings.length === 0}>
               📅 Alle Termine als Kalenderdatei exportieren

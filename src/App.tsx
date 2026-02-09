@@ -20,6 +20,7 @@ import { VerifyEmail } from './pages/VerifyEmail';
 import { MaintenancePage } from './pages/MaintenancePage';
 import { Footer } from './components/Footer';
 import { AppErrorBoundary } from './components/AppErrorBoundary';
+import { GlobalTopHeader } from './components/GlobalTopHeader';
 import './App.css'
 
 // Maintenance-Modus via Env: VITE_MAINTENANCE_MODE=true|1|yes
@@ -34,6 +35,7 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+          <GlobalTopHeader />
           <div style={{ flex: 1 }}>
             <AppErrorBoundary>
             <Routes>

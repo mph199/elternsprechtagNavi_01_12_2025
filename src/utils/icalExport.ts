@@ -163,13 +163,13 @@ export function exportSlotToICal(
     return;
   }
   const timestamp = getCurrentTimestamp();
-  const eventName = settings?.event_name || 'BKSB Elternsprechtag';
+  const eventName = settings?.event_name || 'BKSB Eltern- und Ausbildersprechtag';
   const visitor = buildVisitorDetails(slot);
 
   const icalLines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//BKSB Elternsprechtag//DE',
+    'PRODID:-//BKSB Eltern- und Ausbildersprechtag//DE',
     'CALSCALE:GREGORIAN',
     'X-WR-TIMEZONE:Europe/Berlin',
     'BEGIN:VTIMEZONE',
@@ -203,14 +203,14 @@ export function exportSlotToICal(
     'BEGIN:VALARM',
     'TRIGGER:-PT15M',
     'ACTION:DISPLAY',
-    `DESCRIPTION:${escapeICalText('Erinnerung: Elternsprechtag in 15 Minuten')}`,
+    `DESCRIPTION:${escapeICalText('Erinnerung: Eltern- und Ausbildersprechtag in 15 Minuten')}`,
     'END:VALARM',
     'END:VEVENT',
     'END:VCALENDAR',
   ];
 
   const icalContent = buildICalContent(icalLines);
-  downloadICalFile(icalContent, `${sanitizeFileName(`Elternsprechtag-${teacherName}-${slot.time}`)}.ics`);
+  downloadICalFile(icalContent, `${sanitizeFileName(`Eltern-und-Ausbildersprechtag-${teacherName}-${slot.time}`)}.ics`);
 }
 
 /**
@@ -222,7 +222,7 @@ export function exportBookingsToICal(
   opts?: { teacherRoomById?: Record<number, string | undefined>; defaultRoom?: string }
 ): void {
   const timestamp = getCurrentTimestamp();
-  const eventName = settings?.event_name || 'BKSB Elternsprechtag';
+  const eventName = settings?.event_name || 'BKSB Eltern- und Ausbildersprechtag';
   
   const events = bookings.map(booking => {
     try {
@@ -259,7 +259,7 @@ export function exportBookingsToICal(
   const icalLines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//BKSB Elternsprechtag//DE',
+    'PRODID:-//BKSB Eltern- und Ausbildersprechtag//DE',
     'CALSCALE:GREGORIAN',
     'X-WR-TIMEZONE:Europe/Berlin',
     'BEGIN:VTIMEZONE',
@@ -288,7 +288,7 @@ export function exportBookingsToICal(
 
   const dateStr = settings?.event_date ? new Date(settings.event_date).toISOString().split('T')[0] : 'termine';
   const icalContent = buildICalContent(icalLines);
-  downloadICalFile(icalContent, `${sanitizeFileName(`Elternsprechtag-Alle-Buchungen-${dateStr}`)}.ics`);
+  downloadICalFile(icalContent, `${sanitizeFileName(`Eltern-und-Ausbildersprechtag-Alle-Buchungen-${dateStr}`)}.ics`);
 }
 
 /**
@@ -301,7 +301,7 @@ export function exportTeacherSlotsToICal(
   settings?: ApiSettings
 ): void {
   const timestamp = getCurrentTimestamp();
-  const eventName = settings?.event_name || 'BKSB Elternsprechtag';
+  const eventName = settings?.event_name || 'BKSB Eltern- und Ausbildersprechtag';
   const bookedSlots = slots.filter(s => s.booked);
   
   if (bookedSlots.length === 0) {
@@ -341,7 +341,7 @@ export function exportTeacherSlotsToICal(
   const icalLines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//BKSB Elternsprechtag//DE',
+    'PRODID:-//BKSB Eltern- und Ausbildersprechtag//DE',
     'CALSCALE:GREGORIAN',
     'X-WR-TIMEZONE:Europe/Berlin',
     'BEGIN:VTIMEZONE',
@@ -369,7 +369,7 @@ export function exportTeacherSlotsToICal(
   ];
 
   const icalContent = buildICalContent(icalLines);
-  downloadICalFile(icalContent, `${sanitizeFileName(`Elternsprechtag-${teacherName}`)}.ics`);
+  downloadICalFile(icalContent, `${sanitizeFileName(`Eltern-und-Ausbildersprechtag-${teacherName}`)}.ics`);
 }
 
 /**

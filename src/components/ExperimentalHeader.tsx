@@ -13,13 +13,12 @@ export function ExperimentalHeader({ sectionLabel, userLabel, menu, hint }: Expe
   const resolvedHint = hint === undefined ? 'Navigation über das Menü' : hint;
 
   return (
-    <header className="expHeader" aria-label="BKSB Elternsprechtag">
+    <header className="expHeader" aria-label="Bereichs-Navigation">
       <div className="expHeader__inner">
         <div className="expHeader__left">
           {menu ?? null}
 
           <div className="expHeader__brand">
-            <div className="expHeader__brandTop">BKSB Elternsprechtag</div>
             <div className="expHeader__brandBottom">{sectionLabel}</div>
           </div>
         </div>

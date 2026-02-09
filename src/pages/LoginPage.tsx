@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/useAuth';
 import './LoginPage.css';
 
@@ -44,10 +44,10 @@ export function LoginPage() {
 
   return (
     <div className="login-page">
-      <div className="login-container">
+      <div className="login-container" role="main" aria-label="Login">
         <div className="login-header">
-          <h1>Elternsprechtag</h1>
-          <h2>Login</h2>
+          <h1 className="login-title">Login</h1>
+          <div className="login-subtitle">Für Lehrkräfte und Administration</div>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
@@ -92,7 +92,7 @@ export function LoginPage() {
         </form>
 
         <div className="login-footer">
-          <a href="/" className="back-link">← Zurück zur Buchungsseite</a>
+          <Link to="/" className="back-link">← Zurück zur Buchungsseite</Link>
         </div>
       </div>
     </div>

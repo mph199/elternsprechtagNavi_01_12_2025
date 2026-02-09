@@ -21,6 +21,9 @@ dist-ssr
 .env.test.local
 backend/.env
 
+# Local dev artifacts
+backend/.last-ethereal-email.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

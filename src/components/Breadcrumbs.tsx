@@ -1,13 +1,13 @@
 import { Link, useLocation } from 'react-router-dom';
 
 const labelMap: Record<string, string> = {
-  '/': 'Elternsprechtag',
+  '/': 'Eltern- und Ausbildersprechtag',
   '/login': 'Login',
   '/teacher': 'Lehrkraft',
   '/admin': 'Admin',
   '/admin/teachers': 'Lehrkräfte',
   '/admin/slots': 'Slots',
-  '/admin/events': 'Elternsprechtage',
+  '/admin/events': 'Eltern- und Ausbildersprechtage',
   '/impressum': 'Impressum',
   '/datenschutz': 'Datenschutz',
   '/verify': 'E-Mail bestätigen',
