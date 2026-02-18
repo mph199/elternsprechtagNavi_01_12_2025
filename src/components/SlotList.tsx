@@ -18,14 +18,14 @@ export const SlotList = ({
   onSelectSlot,
 }: SlotListProps) => {
   const emptyMessage = !selectedTeacherId
-    ? 'Bitte wählen Sie eine Lehrkraft aus, um Termine zu sehen.'
+    ? 'Bitte wählen Sie eine Lehrkraft aus, um Zeitfenster zu sehen.'
     : eventId === null
       ? 'Buchungen sind aktuell nicht freigeschaltet. Bitte versuchen Sie es später erneut.'
-      : 'Für diese Lehrkraft sind aktuell keine Termine verfügbar. Bitte wählen Sie eine andere Lehrkraft oder versuchen Sie es später erneut.';
+      : 'Für diese Lehrkraft sind aktuell keine Zeitfenster verfügbar. Bitte wählen Sie eine andere Lehrkraft oder versuchen Sie es später erneut.';
 
   const headline = selectedTeacherId && selectedTeacherName
-    ? `Verfügbare Termine bei ${selectedTeacherName}`
-    : 'Verfügbare Termine';
+    ? `Zeitfenster bei ${selectedTeacherName}`
+    : 'Zeitfenster';
 
   return (
     <div className="slot-list" role="region" aria-label={headline}>
@@ -39,29 +39,21 @@ export const SlotList = ({
           slots.map((slot) => (
             <button
               key={slot.id}
-              className={`slot-card ${slot.booked ? 'booked' : 'available'} ${
-                selectedSlotId === slot.id ? 'selected' : ''
-              }`}
+              className={`slot-card ${selectedSlotId === slot.id ? 'selected' : ''}`}
               type="button"
               onClick={() => onSelectSlot(slot.id)}
               role="listitem"
-              disabled={slot.booked}
               aria-pressed={selectedSlotId === slot.id}
-              aria-label={`Termin ${slot.time} am ${slot.date}${slot.booked ? ' - bereits gebucht' : ' - verfügbar'}`}
+              aria-label={`Zeitfenster ${slot.time} am ${slot.date}`}
             >
-              <div className="slot-time">
-                {slot.time}
+              <div className="slot-kicker">Zeitraum</div>
+              <div className="slot-time" aria-label="Zeitraum">
+                {slot.time || 'Uhrzeit folgt'}
               </div>
-              <div className="slot-date">{slot.date}</div>
-              {slot.booked ? (
-                <div className={`slot-status ${slot.status === 'reserved' ? 'reserved-status' : 'booked-status'}`}>
-                  <span className="status-badge">{slot.status === 'reserved' ? 'Reserviert' : 'Gebucht'}</span>
-                </div>
-              ) : (
-                <div className="slot-status available-status">
-                  <span className="status-badge">Verfügbar</span>
-                </div>
-              )}
+              <div className="slot-meta" aria-label="Tag">
+                <span className="slot-meta-label">Tag</span>
+                <span className="slot-date">{slot.date || 'Datum folgt'}</span>
+              </div>
             </button>
           ))
         )}

@@ -821,6 +821,48 @@
   background: rgba(var(--brand-primary-rgb), 0.05);
 }
 
+/* Teacher bookings table polish */
+.admin-dashboard--teacher .teacher-table-section {
+  overflow: hidden;
+}
+
+.admin-dashboard--teacher .teacher-bookings-table-container {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.admin-dashboard--teacher .teacher-bookings-table {
+  min-width: 980px;
+}
+
+.admin-dashboard--teacher .teacher-bookings-table td {
+  line-height: 1.35;
+  vertical-align: top;
+}
+
+.admin-dashboard--teacher .teacher-bookings-table .message-cell {
+  max-width: 260px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.admin-dashboard--teacher .teacher-bookings-table .teacher-message-value {
+  display: block;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.admin-dashboard--teacher .teacher-bookings-table .action-buttons {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.admin-dashboard--teacher .teacher-request-select {
+  min-width: 152px;
+  max-width: 100%;
+}
+
 @media (max-width: 980px) {
   .admin-users-toolbar {
     flex-direction: column;
@@ -932,6 +974,10 @@
   .teachers-table-container .action-buttons {
     flex-wrap: wrap;
   }
+
+  .admin-dashboard--teacher .teacher-bookings-table {
+    min-width: 860px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -978,6 +1024,158 @@
   .stat-card {
     flex: 1;
     min-width: 0;
+  }
+
+  .admin-dashboard--teacher .teacher-bookings-table-container:not(.teacher-my-bookings-table-container) {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) {
+    min-width: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) thead {
+    display: none;
+  }
+
+  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) tbody {
+    display: block;
+  }
+
+  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) tbody tr {
+    display: block;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-left: 4px solid var(--brand-primary);
+    border-radius: 12px;
+    padding: 0.75rem 0.85rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+  }
+
+  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) tbody td {
+    display: grid;
+    grid-template-columns: minmax(120px, 42%) 1fr;
+    gap: 0.65rem;
+    align-items: start;
+    border: 0;
+    border-bottom: 1px dashed #d1d5db;
+    padding: 0.5rem 0;
+    font-size: 0.92rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) tbody td.message-cell {
+    display: grid;
+    grid-template-columns: minmax(120px, 42%) 1fr;
+    gap: 0.65rem;
+    align-items: start;
+  }
+
+  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) tbody td.message-cell::before {
+    display: inline;
+    margin: 0;
+  }
+
+  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) tbody td.message-cell .teacher-message-value {
+    display: block;
+    padding: 0.3rem 0.55rem;
+    border-radius: 8px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    min-height: 0;
+  }
+
+  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) tbody td:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) tbody td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: #374151;
+  }
+
+  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) .action-buttons {
+    width: 100%;
+  }
+
+  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) .action-buttons > * {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) .teacher-request-select,
+  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) .action-buttons .btn-primary,
+  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) .action-buttons .cancel-button {
+    width: 100%;
+  }
+
+  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) .tooltip-container {
+    width: 100%;
+  }
+
+  .admin-dashboard--teacher .teacher-my-bookings-table-container {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 70vh;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-dashboard--teacher .teacher-my-bookings-table {
+    min-width: 920px;
+    border-collapse: collapse;
+  }
+
+  .admin-dashboard--teacher .teacher-my-bookings-table thead {
+    display: table-header-group;
+    background: #f8f9fa;
+  }
+
+  .admin-dashboard--teacher .teacher-my-bookings-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: #f8f9fa;
+  }
+
+  .admin-dashboard--teacher .teacher-my-bookings-table tbody {
+    display: table-row-group;
+  }
+
+  .admin-dashboard--teacher .teacher-my-bookings-table tbody tr {
+    display: table-row;
+  }
+
+  .admin-dashboard--teacher .teacher-my-bookings-table tbody td {
+    display: table-cell;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 0.75rem;
+    white-space: nowrap;
+  }
+
+  .admin-dashboard--teacher .teacher-my-bookings-table tbody td.message-cell {
+    white-space: normal;
+    min-width: 220px;
+  }
+
+  .admin-dashboard--teacher .teacher-my-bookings-table tbody td::before {
+    content: none;
+  }
+
+  .admin-dashboard--teacher .teacher-my-bookings-table .action-buttons {
+    width: auto;
+    flex-wrap: nowrap;
   }
 }
 

@@ -58,6 +58,9 @@ const api = {
     async getActive() {
       return requestJSON('/events/active');
     },
+    async getUpcoming() {
+      return requestJSON('/events/upcoming');
+    },
   },
   bookings: {
     async verifyEmail(token: string) {
@@ -78,6 +81,13 @@ const api = {
     return requestJSON('/bookings', {
       method: 'POST',
       body: JSON.stringify({ slotId, ...formData }),
+    });
+  },
+
+  async createBookingRequest(teacherId: number, requestedTime: string, formData: any) {
+    return requestJSON('/booking-requests', {
+      method: 'POST',
+      body: JSON.stringify({ teacherId, requestedTime, ...formData }),
     });
   },
   async health() {
@@ -251,6 +261,29 @@ const api = {
     },
     async acceptBooking(bookingId: number) {
       return requestJSON(`/teacher/bookings/${bookingId}/accept`, { method: 'PUT', auth: true });
+    },
+
+    async getRequests() {
+      const res = await requestJSON('/teacher/requests', { auth: true });
+      return (res && (res as any).requests) || [];
+    },
+
+    async acceptRequest(requestId: number, payload?: { time?: string; teacherMessage?: string }) {
+      const safeId = encodeURIComponent(String(requestId));
+      return requestJSON(`/teacher/requests/${safeId}/accept`, {
+        method: 'PUT',
+        auth: true,
+        body: JSON.stringify(payload || {}),
+      });
+    },
+
+    async declineRequest(requestId: number) {
+      const safeId = encodeURIComponent(String(requestId));
+      return requestJSON(`/teacher/requests/${safeId}/decline`, {
+        method: 'PUT',
+        auth: true,
+        body: JSON.stringify({}),
+      });
     },
     async changePassword(currentPassword: string, newPassword: string) {
       return requestJSON('/teacher/password', {

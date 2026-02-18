@@ -32,30 +32,6 @@ export const BookingApp = () => {
   const [eventLoading, setEventLoading] = useState<boolean>(true);
   const [eventError, setEventError] = useState<string>('');
 
-  const formattedEventHeader = useMemo(() => {
-    if (!activeEvent) return '';
-
-    const starts = new Date(activeEvent.starts_at);
-    const ends = new Date(activeEvent.ends_at);
-
-    const weekday = new Intl.DateTimeFormat('de-DE', { weekday: 'long' }).format(starts);
-    const date = new Intl.DateTimeFormat('de-DE', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    }).format(starts);
-    const startTime = new Intl.DateTimeFormat('de-DE', {
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(starts);
-    const endTime = new Intl.DateTimeFormat('de-DE', {
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(ends);
-
-    return `${weekday}, ${date} | ${startTime}–${endTime} Uhr`;
-  }, [activeEvent]);
-
   const formattedEventBanner = useMemo<ReactNode>(() => {
     if (!activeEvent) return '';
 
@@ -83,8 +59,16 @@ export const BookingApp = () => {
       </>
     );
   }, [activeEvent]);
-  
-  
+
+  const selectedTeacher = useMemo(() => {
+    if (!selectedTeacherId) return null;
+    return teachers.find((t) => t.id === selectedTeacherId) ?? null;
+  }, [teachers, selectedTeacherId]);
+
+  const selectedTeacherAccusativeName = useMemo(() => {
+    return selectedTeacher ? teacherDisplayNameAccusative(selectedTeacher) : null;
+  }, [selectedTeacher]);
+
   const {
     slots,
     selectedSlotId,
@@ -95,7 +79,12 @@ export const BookingApp = () => {
     handleSelectSlot,
     handleBooking,
     resetSelection,
-  } = useBooking(selectedTeacherId, activeEvent?.id ?? null);
+  } = useBooking(
+    selectedTeacherId,
+    activeEvent?.id ?? null,
+    activeEvent?.starts_at ?? null,
+    selectedTeacher?.system
+  );
 
   // Lade Lehrkräfte beim Mount
   useEffect(() => {
@@ -138,15 +127,6 @@ export const BookingApp = () => {
     resetSelection();
   };
 
-  const selectedTeacher = useMemo(() => {
-    if (!selectedTeacherId) return null;
-    return teachers.find((t) => t.id === selectedTeacherId) ?? null;
-  }, [teachers, selectedTeacherId]);
-
-  const selectedTeacherAccusativeName = useMemo(() => {
-    return selectedTeacher ? teacherDisplayNameAccusative(selectedTeacher) : null;
-  }, [selectedTeacher]);
-
   return (
     <div className="booking-app">
       {bookingNoticeOpen && (
@@ -158,7 +138,7 @@ export const BookingApp = () => {
             </p>
             <p>
               <span className="booking-notice-important">Wichtig:</span>{' '}
-              Die Lehrkraft kann den Termin erst bestätigen, nachdem Sie Ihre E-Mail-Adresse bestätigt haben.
+              Die Lehrkraft kann Ihnen erst nach der E-Mail-Bestätigung einen Termin zuweisen.
               Bitte prüfen Sie Ihr Postfach (ggf. Spam) und klicken Sie auf den Bestätigungslink.
             </p>
             <button type="button" className="btn btn-primary" onClick={resetSelection}>
@@ -181,7 +161,7 @@ export const BookingApp = () => {
               </p>
 
               <p className="welcomeWindow__text">
-                Wählen Sie die gewünschte Lehrkraft aus, klicken Sie auf einen freien Termin und senden Sie Ihre Anfrage ab.
+                Wählen Sie die gewünschte Lehrkraft aus, wählen Sie ein Zeitfenster und senden Sie Ihre Anfrage ab.
               </p>
 
               {(eventLoading || eventError || !activeEvent) && (
@@ -195,7 +175,7 @@ export const BookingApp = () => {
               <h2 className="welcomeWindow__sideTitle">In drei Schritten zum Termin:</h2>
               <ol className="welcomeWindow__steps">
                 <li>Lehrkraft auswählen</li>
-                <li>Freien Slot anklicken</li>
+                <li>Zeitfenster auswählen</li>
                 <li>Daten eingeben und Anfrage senden</li>
               </ol>
             </aside>
@@ -215,7 +195,6 @@ export const BookingApp = () => {
             <TeacherCombobox
               teachers={teachers}
               selectedTeacherId={selectedTeacherId}
-              disabled={teachersLoading}
               onSelectTeacher={handleTeacherSelect}
               onClearSelection={handleClearTeacher}
             />

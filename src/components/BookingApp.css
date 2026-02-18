@@ -724,11 +724,16 @@
 
 .slots-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.slots-container > .slot-card:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
 }
 
 .no-slots {
+  grid-column: 1 / -1;
   text-align: center;
   color: #9ca3af;
   padding: 2rem;
@@ -739,15 +744,15 @@
   border: none;
   width: 100%;
   text-align: left;
-  padding: 0.75rem 0.8rem;
+  padding: 1rem 1.05rem;
   border: 2px solid rgba(229, 231, 235, 0.6);
-  border-radius: 12px;
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
-  min-height: 48px; /* Touch-Target-Minimum */
+  gap: 0.55rem;
+  min-height: 108px;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(4px);
 }
@@ -787,15 +792,38 @@
 }
 
 .slot-time {
-  font-weight: 600;
-  font-size: 1rem;
+  font-weight: 800;
+  font-size: 1.12rem;
+  line-height: 1.2;
   color: #111827;
 }
 
+.slot-kicker {
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.slot-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.slot-meta-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #64748b;
+}
+
 .slot-date {
-  font-size: 0.85rem;
-  color: #6b7280;
-  font-weight: 500;
+  font-size: 0.92rem;
+  color: #475569;
+  font-weight: 600;
 }
 
 .slot-status {
@@ -1138,13 +1166,14 @@
   }
 
   .slots-container {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
   }
 
   .teacher-card,
   .slot-card {
-    padding: 1rem;
+    padding: 1.05rem;
+    min-height: 114px;
   }
 }
 
@@ -1183,6 +1212,15 @@
 
   .app-header .header-title {
     font-size: 1.25rem;
+  }
+
+  .slots-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+
+  .slot-card {
+    min-height: 124px;
   }
 
   .app-header .header-date {

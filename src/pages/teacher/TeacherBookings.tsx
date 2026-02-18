@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useOutletContext } from 'react-router-dom';
+import { useOutletContext } from 'react-router-dom';
 import api from '../../services/api';
 import type { TimeSlot } from '../../types';
 import { exportBookingsToICal } from '../../utils/icalExport';
@@ -168,17 +168,18 @@ export function TeacherBookings() {
         </div>
       </div>
 
-      <section className="stat-card" style={{ padding: '1.1rem 1.1rem' }}>
+      <section className="stat-card teacher-table-section" style={{ padding: '1.1rem 1.1rem', marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: '1rem' }}>
-          <h3 style={{ margin: 0 }}>Meine Buchungen</h3>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            <button onClick={exportICal} className="btn-primary" disabled={bookings.length === 0}>
-              📅 Alle Termine als Kalenderdatei exportieren
-            </button>
-            <Link to="/teacher/feedback" className="btn-secondary" style={{ textDecoration: 'none' }}>
-              Feedback senden
-            </Link>
-          </div>
+          <h3 style={{ margin: 0 }}>Buchungen einsehen</h3>
+          <button type="button" className="btn-secondary" onClick={loadBookings}>
+            Aktualisieren
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+          <button onClick={exportICal} className="btn-primary" disabled={bookings.length === 0}>
+            📅 Alle Termine als Kalenderdatei exportieren
+          </button>
         </div>
 
         {filtered.length === 0 ? (
@@ -186,8 +187,8 @@ export function TeacherBookings() {
             <p>Noch keine Buchungen vorhanden.</p>
           </div>
         ) : (
-          <div className="bookings-table-container">
-            <table className="bookings-table">
+          <div className="bookings-table-container teacher-bookings-table-container teacher-my-bookings-table-container">
+            <table className="bookings-table teacher-bookings-table teacher-my-bookings-table">
               <thead>
                 <tr>
                   <th>Datum</th>
@@ -204,16 +205,16 @@ export function TeacherBookings() {
               <tbody>
                 {filtered.map((booking) => (
                   <tr key={booking.id}>
-                    <td>{booking.date}</td>
-                    <td>{booking.time}</td>
-                    <td>
+                    <td data-label="Datum">{booking.date}</td>
+                    <td data-label="Zeit">{booking.time}</td>
+                    <td data-label="Typ">
                       {booking.visitorType === 'parent' ? (
                         <span className="badge badge-parent">Erziehungsberechtigte</span>
                       ) : (
                         <span className="badge badge-company">Ausbildungsbetrieb</span>
                       )}
                     </td>
-                    <td>
+                    <td data-label="Name">
                       {booking.visitorType === 'parent' ? (
                         booking.parentName
                       ) : (
@@ -225,13 +226,15 @@ export function TeacherBookings() {
                         </div>
                       )}
                     </td>
-                    <td>{booking.visitorType === 'parent' ? booking.studentName : booking.traineeName}</td>
-                    <td>{booking.className}</td>
-                    <td>
+                    <td data-label="Schüler*in/Azubi">{booking.visitorType === 'parent' ? booking.studentName : booking.traineeName}</td>
+                    <td data-label="Klasse">{booking.className}</td>
+                    <td data-label="E-Mail">
                       <a href={`mailto:${booking.email}`}>{booking.email}</a>
                     </td>
-                    <td className="message-cell">{booking.message || '-'}</td>
-                    <td>
+                    <td className="message-cell" data-label="Nachricht">
+                      <span className="teacher-message-value">{booking.message || '-'}</span>
+                    </td>
+                    <td data-label="Aktionen">
                       <div className="action-buttons">
                         {booking.status === 'reserved' && (
                           <div className="tooltip-container">

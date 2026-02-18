@@ -29,3 +29,29 @@ export function mapBookingRowWithTeacher(slot) {
     teacherSubject: slot.teacher?.subject || 'Unknown',
   };
 }
+
+export function mapBookingRequestRow(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    eventId: row.event_id ?? undefined,
+    teacherId: row.teacher_id,
+    requestedTime: row.requested_time,
+    date: row.date,
+    status: row.status,
+    verifiedAt: row.verified_at,
+    confirmationSentAt: row.confirmation_sent_at,
+    assignedSlotId: row.assigned_slot_id,
+    visitorType: row.visitor_type,
+    parentName: row.parent_name,
+    companyName: row.company_name,
+    studentName: row.student_name,
+    traineeName: row.trainee_name,
+    representativeName: row.representative_name,
+    className: row.class_name,
+    email: row.email,
+    message: row.message,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}

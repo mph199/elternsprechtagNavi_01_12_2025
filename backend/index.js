@@ -20,6 +20,50 @@ import { mapSlotRow } from './utils/mappers.js';
 
 dotenv.config();
 
+function buildHalfHourWindows(startHour, endHour) {
+  const windows = [];
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const toMins = (h, m) => h * 60 + m;
+  const fmt = (mins) => `${pad2(Math.floor(mins / 60))}:${pad2(mins % 60)}`;
+
+  const start = toMins(startHour, 0);
+  const end = toMins(endHour, 0);
+  for (let m = start; m + 30 <= end; m += 30) {
+    windows.push(`${fmt(m)} - ${fmt(m + 30)}`);
+  }
+  return windows;
+}
+
+function buildQuarterHourWindows(startHour, endHour) {
+  const windows = [];
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const toMins = (h, m) => h * 60 + m;
+  const fmt = (mins) => `${pad2(Math.floor(mins / 60))}:${pad2(mins % 60)}`;
+
+  const start = toMins(startHour, 0);
+  const end = toMins(endHour, 0);
+  for (let m = start; m + 15 <= end; m += 15) {
+    windows.push(`${fmt(m)} - ${fmt(m + 15)}`);
+  }
+  return windows;
+}
+
+function getRequestedTimeWindowsForSystem(system) {
+  if (system === 'vollzeit') {
+    return buildHalfHourWindows(17, 19);
+  }
+  return buildHalfHourWindows(16, 18);
+}
+
+function formatDateDE(isoOrDate) {
+  const d = new Date(isoOrDate);
+  if (Number.isNaN(d.getTime())) return null;
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = String(d.getFullYear());
+  return `${dd}.${mm}.${yyyy}`;
+}
+
 function normalizeAndValidateTeacherEmail(rawEmail) {
   const email = typeof rawEmail === 'string' ? rawEmail.trim().toLowerCase() : '';
   const isValid = /^[a-z0-9._%+-]+@bksb\.nrw$/i.test(email);
@@ -36,6 +80,65 @@ function normalizeAndValidateTeacherSalutation(raw) {
     return { ok: false, salutation: null };
   }
   return { ok: true, salutation };
+}
+
+async function verifyBookingRequestToken(token) {
+  if (!token || typeof token !== 'string') {
+    const err = new Error('Ungültiger oder abgelaufener Link');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const { data: reqRow, error } = await supabase
+    .from('booking_requests')
+    .select('*')
+    // only pending requests are verifiable
+    .eq('status', 'requested')
+    .eq('verification_token_hash', tokenHash)
+    .single();
+
+  if (error || !reqRow) {
+    const err = new Error('Ungültiger oder abgelaufener Link');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  // Idempotent verify
+  if (reqRow.verified_at) {
+    return { requestRow: reqRow, verifiedAt: reqRow.verified_at };
+  }
+
+  const ttlHoursRaw = process.env.VERIFICATION_TOKEN_TTL_HOURS;
+  const ttlHours = Number.parseInt(ttlHoursRaw || '72', 10);
+  const ttlMs = (Number.isFinite(ttlHours) ? ttlHours : 72) * 60 * 60 * 1000;
+
+  if (reqRow.verification_sent_at) {
+    const sentAt = new Date(reqRow.verification_sent_at);
+    if (!Number.isNaN(sentAt.getTime())) {
+      const ageMs = Date.now() - sentAt.getTime();
+      if (ageMs > ttlMs) {
+        const err = new Error('Link abgelaufen. Bitte senden Sie Ihre Anfrage erneut.');
+        err.statusCode = 410;
+        throw err;
+      }
+    }
+  }
+
+  const now = new Date().toISOString();
+  await supabase
+    .from('booking_requests')
+    .update({
+      verified_at: now,
+      verification_token_hash: null,
+      updated_at: now,
+    })
+    .eq('id', reqRow.id);
+
+  return {
+    requestRow: { ...reqRow, verified_at: now, verification_token_hash: null },
+    verifiedAt: now,
+  };
 }
 
 // Express App
@@ -162,19 +265,38 @@ app.get('/api/slots', async (req, res) => {
       return res.status(400).json({ error: 'teacherId must be a number' });
     }
 
+    const { data: teacherRow, error: teacherErr } = await supabase
+      .from('teachers')
+      .select('id, system')
+      .eq('id', teacherIdNum)
+      .single();
+    if (teacherErr) throw teacherErr;
+
     // Resolve event scope: explicit eventId OR active published event
     let resolvedEventId = null;
+    let resolvedEventStartsAt = null;
     if (eventId !== undefined) {
       const parsed = parseInt(String(eventId), 10);
       if (isNaN(parsed)) {
         return res.status(400).json({ error: 'eventId must be a number' });
       }
       resolvedEventId = parsed;
+      try {
+        const { data: ev, error: evErr } = await supabase
+          .from('events')
+          .select('id, starts_at')
+          .eq('id', resolvedEventId)
+          .single();
+        if (evErr) throw evErr;
+        resolvedEventStartsAt = ev?.starts_at || null;
+      } catch {
+        resolvedEventStartsAt = null;
+      }
     } else {
       const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('events')
-        .select('id')
+        .select('id, starts_at')
         .eq('status', 'published')
         .or(`booking_opens_at.is.null,booking_opens_at.lte.${now}`)
         .or(`booking_closes_at.is.null,booking_closes_at.gte.${now}`)
@@ -182,17 +304,25 @@ app.get('/api/slots', async (req, res) => {
         .limit(1);
       if (error) throw error;
       resolvedEventId = data && data.length ? data[0].id : null;
+      resolvedEventStartsAt = data && data.length ? data[0].starts_at : null;
     }
 
-    const slots = await listSlotsByTeacherId(teacherIdNum);
+    const teacherSystem = teacherRow?.system || 'dual';
+    const times = getRequestedTimeWindowsForSystem(teacherSystem);
+    const eventDate = formatDateDE(resolvedEventStartsAt || new Date().toISOString()) || '01.01.1970';
 
-    // Strict scoping: when an event is resolved (explicit or active), only return slots for that event.
-    // This prevents legacy slots (event_id NULL) from showing up mixed with the active event.
-    const scopedSlots = resolvedEventId
-      ? slots.filter((s) => s.eventId === resolvedEventId)
-      : slots;
+    // Privacy: do not expose booking occupancy or visitor details on public endpoints.
+    // Return synthetic slot-like objects (id is stable per response but not a DB slot id).
+    const publicSlots = times.map((time, idx) => ({
+      id: idx + 1,
+      eventId: resolvedEventId ?? undefined,
+      teacherId: teacherIdNum,
+      time,
+      date: eventDate,
+      booked: false,
+    }));
 
-    res.json({ slots: scopedSlots });
+    return res.json({ slots: publicSlots });
   } catch (error) {
     console.error('Error fetching slots:', error);
     res.status(500).json({ error: 'Failed to fetch slots' });
@@ -274,46 +404,258 @@ app.post('/api/bookings', async (req, res) => {
   }
 });
 
+// POST /api/booking-requests
+// Body: { teacherId, requestedTime, visitorType, parentName, companyName, studentName, traineeName, representativeName, className, email, message }
+app.post('/api/booking-requests', async (req, res) => {
+  try {
+    const payload = req.body || {};
+
+    // Require active published event
+    const nowIso = new Date().toISOString();
+    const { data: activeEvents, error: activeErr } = await supabase
+      .from('events')
+      .select('id, starts_at')
+      .eq('status', 'published')
+      .or(`booking_opens_at.is.null,booking_opens_at.lte.${nowIso}`)
+      .or(`booking_closes_at.is.null,booking_closes_at.gte.${nowIso}`)
+      .order('starts_at', { ascending: false })
+      .limit(1);
+    if (activeErr) throw activeErr;
+    const activeEvent = activeEvents && activeEvents.length ? activeEvents[0] : null;
+    const activeEventId = activeEvent?.id || null;
+    if (!activeEventId) {
+      return res.status(409).json({ error: 'Buchungen sind aktuell nicht freigegeben' });
+    }
+
+    const teacherIdNum = parseInt(String(payload.teacherId || ''), 10);
+    if (!teacherIdNum || isNaN(teacherIdNum)) {
+      return res.status(400).json({ error: 'teacherId required' });
+    }
+
+    const { data: teacherRow, error: teacherErr } = await supabase
+      .from('teachers')
+      .select('id, system')
+      .eq('id', teacherIdNum)
+      .single();
+    if (teacherErr) throw teacherErr;
+
+    const requestedTime = typeof payload.requestedTime === 'string' ? payload.requestedTime.trim() : '';
+    const allowedTimes = getRequestedTimeWindowsForSystem(teacherRow?.system || 'dual');
+    if (!allowedTimes.includes(requestedTime)) {
+      return res.status(400).json({ error: 'requestedTime invalid' });
+    }
+
+    const visitorType = payload.visitorType;
+    const className = typeof payload.className === 'string' ? payload.className.trim() : '';
+    const email = typeof payload.email === 'string' ? payload.email.trim() : '';
+    const message = typeof payload.message === 'string' ? payload.message.trim() : '';
+
+    if (!visitorType || !className || !email) {
+      return res.status(400).json({ error: 'visitorType, className, email required' });
+    }
+
+    const normalize = (v) => (typeof v === 'string' ? v.trim() : '');
+
+    if (visitorType === 'parent') {
+      const parentName = normalize(payload.parentName);
+      const studentName = normalize(payload.studentName);
+      if (!parentName || !studentName) {
+        return res.status(400).json({ error: 'parentName and studentName required for parent type' });
+      }
+    } else if (visitorType === 'company') {
+      const companyName = normalize(payload.companyName);
+      const traineeName = normalize(payload.traineeName);
+      const representativeName = normalize(payload.representativeName);
+      if (!companyName || !traineeName || !representativeName) {
+        return res.status(400).json({ error: 'companyName, traineeName and representativeName required for company type' });
+      }
+    } else {
+      return res.status(400).json({ error: 'visitorType must be parent or company' });
+    }
+
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenHash = crypto.createHash('sha256').update(verificationToken).digest('hex');
+    const now = new Date().toISOString();
+    const eventDate = formatDateDE(activeEvent.starts_at) || formatDateDE(now) || '01.01.1970';
+
+    const insert = {
+      event_id: activeEventId,
+      teacher_id: teacherIdNum,
+      requested_time: requestedTime,
+      date: eventDate,
+      status: 'requested',
+      visitor_type: visitorType,
+      class_name: className,
+      email,
+      message: message || null,
+      verification_token_hash: verificationTokenHash,
+      verification_sent_at: now,
+      verified_at: null,
+      confirmation_sent_at: null,
+      assigned_slot_id: null,
+      updated_at: now,
+    };
+
+    if (visitorType === 'parent') {
+      insert.parent_name = normalize(payload.parentName);
+      insert.student_name = normalize(payload.studentName);
+      insert.company_name = null;
+      insert.trainee_name = null;
+      insert.representative_name = null;
+    } else {
+      insert.company_name = normalize(payload.companyName);
+      insert.trainee_name = normalize(payload.traineeName);
+      insert.representative_name = normalize(payload.representativeName);
+      insert.parent_name = null;
+      insert.student_name = null;
+    }
+
+    const { data: created, error: insErr } = await supabase
+      .from('booking_requests')
+      .insert(insert)
+      .select('*')
+      .single();
+    if (insErr) throw insErr;
+
+    // Send verification email (best-effort)
+    if (created && isEmailConfigured()) {
+      const baseUrl = process.env.PUBLIC_BASE_URL || 'http://localhost:5173';
+      const verifyUrl = `${baseUrl}/verify?token=${verificationToken}`;
+      const teacherRes = await supabase.from('teachers').select('*').eq('id', teacherIdNum).single();
+      const teacher = teacherRes.data || {};
+      const subject = `BKSB Elternsprechtag – E-Mail-Adresse bestätigen (Terminanfrage)`;
+      const plain = `Guten Tag,
+
+bitte bestätigen Sie Ihre E-Mail-Adresse, um Ihre Terminanfrage im BKSB-Elternsprechtag-System abzuschließen.
+
+Gewünschter Zeitraum: ${created.date} ${created.requested_time}
+Lehrkraft: ${teacher.name || '—'}
+Raum: ${teacher.room || '—'}
+
+Bestätigungslink: ${verifyUrl}
+
+Hinweis: Die Lehrkraft vergibt die Termine. Nach Bestätigung Ihrer E-Mail-Adresse kann die Lehrkraft die Anfrage annehmen.
+
+Mit freundlichen Grüßen
+
+Ihr BKSB-Team`;
+      const html = `<p>Guten Tag,</p>
+<p>bitte bestätigen Sie Ihre E-Mail-Adresse, um Ihre Terminanfrage im BKSB-Elternsprechtag-System abzuschließen.</p>
+<p><strong>Gewünschter Zeitraum:</strong> ${created.date} ${created.requested_time}<br/>
+<strong>Lehrkraft:</strong> ${teacher.name || '—'}<br/>
+<strong>Raum:</strong> ${teacher.room || '—'}</p>
+<p><a href="${verifyUrl}">E-Mail-Adresse jetzt bestätigen</a></p>
+<p><strong>Hinweis:</strong> Die Lehrkraft vergibt die Termine. Nach Bestätigung Ihrer E-Mail-Adresse kann die Lehrkraft die Anfrage annehmen.</p>
+<p>Mit freundlichen Grüßen</p>
+<p>Ihr BKSB-Team</p>`;
+      try {
+        await sendMail({ to: email, subject, text: plain, html });
+      } catch (e) {
+        console.warn('Sending verification email (request) failed:', e?.message || e);
+      }
+    }
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Error creating booking request:', error);
+    return res.status(500).json({ error: 'Failed to create booking request' });
+  }
+});
+
 // GET /api/bookings/verify/:token - verify email and possibly send confirmation if already accepted
 app.get('/api/bookings/verify/:token', async (req, res) => {
   const { token } = req.params;
   if (!token) return res.status(400).json({ error: 'Missing token' });
 
   try {
-    const { slotRow: slot, verifiedAt: now } = await verifyBookingToken(token);
+    let slot = null;
+    let request = null;
+    let now = new Date().toISOString();
 
-    // If already confirmed and confirmation mail not sent, send now
-    if (slot.status === 'confirmed' && !slot.confirmation_sent_at && isEmailConfigured()) {
-      try {
-        const teacherRes = await supabase.from('teachers').select('*').eq('id', slot.teacher_id).single();
-        const teacher = teacherRes.data || {};
-        const subject = `BKSB Elternsprechtag – Termin bestätigt am ${slot.date} (${slot.time})`;
-        const plain = `Guten Tag,
-
-      Ihre Terminbuchung wurde durch die Lehrkraft bestätigt.
-
-      Termin: ${slot.date} ${slot.time}
-      Lehrkraft: ${teacher.name || '—'}
-      Raum: ${teacher.room || '—'}
-
-      Mit freundlichen Grüßen
-
-      Ihr BKSB-Team`;
-        const html = `<p>Guten Tag,</p>
-      <p>Ihre Terminbuchung wurde durch die Lehrkraft bestätigt.</p>
-      <p><strong>Termin:</strong> ${slot.date} ${slot.time}<br/>
-      <strong>Lehrkraft:</strong> ${teacher.name || '—'}<br/>
-      <strong>Raum:</strong> ${teacher.room || '—'}</p>
-      <p>Mit freundlichen Grüßen</p>
-      <p>Ihr BKSB-Team</p>`;
-        await sendMail({ to: slot.email, subject, text: plain, html });
-        await supabase.from('slots').update({ confirmation_sent_at: now, updated_at: now }).eq('id', slot.id);
-      } catch (e) {
-        console.warn('Sending confirmation after verify failed:', e?.message || e);
-      }
+    try {
+      const verifiedSlot = await verifyBookingToken(token);
+      slot = verifiedSlot.slotRow;
+      now = verifiedSlot.verifiedAt;
+    } catch (e) {
+      if (e?.statusCode !== 404) throw e;
+      const verifiedReq = await verifyBookingRequestToken(token);
+      request = verifiedReq.requestRow;
+      now = verifiedReq.verifiedAt;
     }
 
-    return res.json({ success: true, message: 'E-Mail bestätigt. Wir informieren Sie bei Bestätigung durch die Lehrkraft.' });
+    // Legacy slot verification path
+    if (slot) {
+      if (slot.status === 'confirmed' && !slot.confirmation_sent_at && isEmailConfigured()) {
+        try {
+          const teacherRes = await supabase.from('teachers').select('*').eq('id', slot.teacher_id).single();
+          const teacher = teacherRes.data || {};
+          const subject = `BKSB Elternsprechtag – Termin bestätigt am ${slot.date} (${slot.time})`;
+          const plain = `Guten Tag,
+
+Ihre Terminbuchung wurde durch die Lehrkraft bestätigt.
+
+Termin: ${slot.date} ${slot.time}
+Lehrkraft: ${teacher.name || '—'}
+Raum: ${teacher.room || '—'}
+
+Mit freundlichen Grüßen
+
+Ihr BKSB-Team`;
+          const html = `<p>Guten Tag,</p>
+<p>Ihre Terminbuchung wurde durch die Lehrkraft bestätigt.</p>
+<p><strong>Termin:</strong> ${slot.date} ${slot.time}<br/>
+<strong>Lehrkraft:</strong> ${teacher.name || '—'}<br/>
+<strong>Raum:</strong> ${teacher.room || '—'}</p>
+<p>Mit freundlichen Grüßen</p>
+<p>Ihr BKSB-Team</p>`;
+          await sendMail({ to: slot.email, subject, text: plain, html });
+          await supabase.from('slots').update({ confirmation_sent_at: now, updated_at: now }).eq('id', slot.id);
+        } catch (e) {
+          console.warn('Sending confirmation after verify failed:', e?.message || e);
+        }
+      }
+      return res.json({ success: true, message: 'E-Mail bestätigt. Wir informieren Sie bei Bestätigung durch die Lehrkraft.' });
+    }
+
+    // Booking request verification path
+    if (request) {
+      // If already accepted and slot assigned, and confirmation not sent, send now
+      if (request.status === 'accepted' && request.assigned_slot_id && !request.confirmation_sent_at && isEmailConfigured()) {
+        try {
+          const slotRes = await supabase.from('slots').select('*').eq('id', request.assigned_slot_id).single();
+          const slotRow = slotRes.data || null;
+          const teacherRes = await supabase.from('teachers').select('*').eq('id', request.teacher_id).single();
+          const teacher = teacherRes.data || {};
+          const when = slotRow ? `${slotRow.date} ${slotRow.time}` : `${request.date} ${request.requested_time}`;
+          const subject = `BKSB Elternsprechtag – Termin bestätigt (${when})`;
+          const plain = `Guten Tag,
+
+Ihre Terminanfrage wurde durch die Lehrkraft angenommen.
+
+Termin: ${when}
+Lehrkraft: ${teacher.name || '—'}
+Raum: ${teacher.room || '—'}
+
+Mit freundlichen Grüßen
+
+Ihr BKSB-Team`;
+          const html = `<p>Guten Tag,</p>
+<p>Ihre Terminanfrage wurde durch die Lehrkraft angenommen.</p>
+<p><strong>Termin:</strong> ${when}<br/>
+<strong>Lehrkraft:</strong> ${teacher.name || '—'}<br/>
+<strong>Raum:</strong> ${teacher.room || '—'}</p>
+<p>Mit freundlichen Grüßen</p>
+<p>Ihr BKSB-Team</p>`;
+          await sendMail({ to: request.email, subject, text: plain, html });
+          await supabase.from('booking_requests').update({ confirmation_sent_at: now, updated_at: now }).eq('id', request.id);
+        } catch (e) {
+          console.warn('Sending confirmation after request verify failed:', e?.message || e);
+        }
+      }
+      return res.json({ success: true, message: 'E-Mail bestätigt. Wir informieren Sie, sobald die Lehrkraft Ihnen einen Termin zuweist.' });
+    }
+
+    return res.json({ success: true, message: 'E-Mail bestätigt.' });
   } catch (e) {
     console.error('Error verifying email:', e);
     const status = e?.statusCode || 500;
@@ -462,39 +804,10 @@ app.patch('/api/admin/users/:id', requireAdmin, async (req, res) => {
 
 // Helper function to generate time slots
 function generateTimeSlots(system) {
-  const slots = [];
-  let startHour, startMinute, endHour, endMinute;
-  
   if (system === 'vollzeit') {
-    startHour = 17;
-    startMinute = 0;
-    endHour = 19;
-    endMinute = 0;
-  } else { // dual
-    startHour = 16;
-    startMinute = 0;
-    endHour = 18;
-    endMinute = 0;
+    return buildQuarterHourWindows(17, 19);
   }
-  
-  let currentHour = startHour;
-  let currentMinute = startMinute;
-  
-  while (currentHour < endHour || (currentHour === endHour && currentMinute < endMinute)) {
-    const endSlotHour = currentMinute === 45 ? currentHour + 1 : currentHour;
-    const endSlotMinute = currentMinute === 45 ? 0 : currentMinute + 15;
-    
-    const timeString = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')} - ${String(endSlotHour).padStart(2, '0')}:${String(endSlotMinute).padStart(2, '0')}`;
-    slots.push(timeString);
-    
-    currentMinute += 15;
-    if (currentMinute >= 60) {
-      currentMinute = 0;
-      currentHour += 1;
-    }
-  }
-  
-  return slots;
+  return buildQuarterHourWindows(16, 18);
 }
 
 // POST /api/admin/teachers - Create new teacher (and login user)
@@ -1241,6 +1554,26 @@ app.get('/api/events/active', async (_req, res) => {
   }
 });
 
+// Public: get upcoming published events
+app.get('/api/events/upcoming', async (_req, res) => {
+  try {
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('status', 'published')
+      .gte('starts_at', now)
+      .order('starts_at', { ascending: true })
+      .limit(3);
+
+    if (error) throw error;
+    res.json({ events: data || [] });
+  } catch (error) {
+    console.error('Error fetching upcoming events:', error);
+    res.status(500).json({ error: 'Failed to fetch upcoming events' });
+  }
+});
+
 // Admin: list events
 app.get('/api/admin/events', requireAuth, requireAdmin, async (_req, res) => {
   try {
@@ -1391,16 +1724,12 @@ app.get('/api/admin/events/:id/stats', requireAuth, requireAdmin, async (req, re
 
 // Admin: generate slots for a specific event (single-day events)
 // POST /api/admin/events/:id/generate-slots
-// Body (optional): { slotMinutes?: number, dryRun?: boolean, replaceExisting?: boolean }
+// Body (optional): { dryRun?: boolean, replaceExisting?: boolean }
 app.post('/api/admin/events/:id/generate-slots', requireAuth, requireAdmin, async (req, res) => {
   const eventId = parseInt(req.params.id, 10);
   if (isNaN(eventId)) return res.status(400).json({ error: 'Invalid id' });
 
-  const { slotMinutes, dryRun, replaceExisting } = req.body || {};
-  const slotLen = Number(slotMinutes || 15);
-  if (!Number.isFinite(slotLen) || slotLen < 5 || slotLen > 60) {
-    return res.status(400).json({ error: 'slotMinutes must be between 5 and 60' });
-  }
+  const { dryRun, replaceExisting } = req.body || {};
 
   const formatDateDE = (isoOrDate) => {
     const d = new Date(isoOrDate);
@@ -1409,13 +1738,6 @@ app.post('/api/admin/events/:id/generate-slots', requireAuth, requireAdmin, asyn
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const yyyy = String(d.getFullYear());
     return `${dd}.${mm}.${yyyy}`;
-  };
-  const pad2 = (n) => String(n).padStart(2, '0');
-  const toMinutes = (h, m) => h * 60 + m;
-  const minutesToHHMM = (mins) => {
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
-    return `${pad2(h)}:${pad2(m)}`;
   };
 
   try {
@@ -1454,9 +1776,7 @@ app.post('/api/admin/events/:id/generate-slots', requireAuth, requireAdmin, asyn
     let skipped = 0;
 
     for (const t of teacherRows) {
-      const teacherSystem = t.system || 'dual';
-      const windowStart = teacherSystem === 'vollzeit' ? toMinutes(17, 0) : toMinutes(16, 0);
-      const windowEnd = teacherSystem === 'vollzeit' ? toMinutes(19, 0) : toMinutes(18, 0);
+      const times = generateTimeSlots(t.system || 'dual');
 
       // Fetch existing slots for this teacher+event+date to avoid duplicates
       const { data: existingSlots, error: existingErr } = await supabase
@@ -1469,9 +1789,7 @@ app.post('/api/admin/events/:id/generate-slots', requireAuth, requireAdmin, asyn
       const existingTimes = new Set((existingSlots || []).map((s) => s.time));
 
       const inserts = [];
-      for (let start = windowStart; start + slotLen <= windowEnd; start += slotLen) {
-        const end = start + slotLen;
-        const time = `${minutesToHHMM(start)} - ${minutesToHHMM(end)}`;
+      for (const time of times) {
         if (existingTimes.has(time)) {
           skipped += 1;
           continue;

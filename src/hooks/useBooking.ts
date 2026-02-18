@@ -1,8 +1,45 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { TimeSlot, BookingFormData } from '../types';
+import type { TimeSlot, BookingFormData, Teacher } from '../types';
 import api from '../services/api';
 
-export const useBooking = (selectedTeacherId: number | null, eventId?: number | null) => {
+type CreateBookingRequestResponse = {
+  success?: boolean;
+  message?: string;
+};
+
+function buildHalfHourWindows(startHour: number, endHour: number) {
+  const windows: string[] = [];
+  const pad2 = (n: number) => String(n).padStart(2, '0');
+  const toMins = (h: number, m: number) => h * 60 + m;
+  const fmt = (mins: number) => `${pad2(Math.floor(mins / 60))}:${pad2(mins % 60)}`;
+  const start = toMins(startHour, 0);
+  const end = toMins(endHour, 0);
+  for (let m = start; m + 30 <= end; m += 30) {
+    windows.push(`${fmt(m)} - ${fmt(m + 30)}`);
+  }
+  return windows;
+}
+
+function getRequestedTimeWindowsForSystem(system: Teacher['system'] | undefined) {
+  return system === 'vollzeit' ? buildHalfHourWindows(17, 19) : buildHalfHourWindows(16, 18);
+}
+
+function formatDateDE(iso: string | null | undefined) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = String(d.getFullYear());
+  return `${dd}.${mm}.${yyyy}`;
+}
+
+export const useBooking = (
+  selectedTeacherId: number | null,
+  eventId?: number | null,
+  eventStartsAt?: string | null,
+  selectedTeacherSystem?: Teacher['system'],
+) => {
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [selectedSlotId, setSelectedSlotId] = useState<number | null>(null);
   const [message, setMessage] = useState<string>('');
@@ -10,29 +47,27 @@ export const useBooking = (selectedTeacherId: number | null, eventId?: number | 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
-  // Lade Slots wenn Lehrkraft ausgewählt wird
+  // Build fixed time windows when teacher is selected and event is active
   useEffect(() => {
     if (!selectedTeacherId || eventId === null) {
       setSlots([]);
+      setSelectedSlotId(null);
       return;
     }
+    setLoading(false);
+    setError('');
 
-    const loadSlots = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const fetchedSlots = await api.getSlots(selectedTeacherId, eventId);
-        setSlots(fetchedSlots);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Fehler beim Laden der Termine');
-        setSlots([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadSlots();
-  }, [selectedTeacherId, eventId]);
+    const date = formatDateDE(eventStartsAt);
+    const times = getRequestedTimeWindowsForSystem(selectedTeacherSystem);
+    const fixedSlots: TimeSlot[] = times.map((time, idx) => ({
+      id: idx + 1,
+      teacherId: selectedTeacherId,
+      time,
+      date,
+      booked: false,
+    }));
+    setSlots(fixedSlots);
+  }, [selectedTeacherId, eventId, eventStartsAt, selectedTeacherSystem]);
 
   const handleSelectSlot = useCallback((slotId: number) => {
     setSelectedSlotId(slotId);
@@ -46,6 +81,11 @@ export const useBooking = (selectedTeacherId: number | null, eventId?: number | 
       return;
     }
 
+    if (!selectedTeacherId) {
+      setMessage('Bitte wählen Sie zuerst eine Lehrkraft aus.');
+      return;
+    }
+
     if (eventId === null) {
       setMessage('Buchungen sind aktuell nicht freigeschaltet.');
       return;
@@ -54,20 +94,25 @@ export const useBooking = (selectedTeacherId: number | null, eventId?: number | 
     setLoading(true);
     setError('');
     try {
-      const response = await api.createBooking(selectedSlotId, formData);
-      
-      if (response.success && response.updatedSlot) {
-        // Aktualisiere lokalen State
-        setSlots((prevSlots) =>
-          prevSlots.map((slot) =>
-            slot.id === selectedSlotId ? response.updatedSlot! : slot
-          )
-        );
+      const selectedSlot = slots.find((s) => s.id === selectedSlotId);
+      const requestedTime = selectedSlot?.time;
+      if (!requestedTime) {
+        setMessage('Bitte wählen Sie einen Zeitslot aus.');
+        return;
+      }
+
+      const response = (await api.createBookingRequest(
+        selectedTeacherId,
+        requestedTime,
+        formData
+      )) as CreateBookingRequestResponse | null;
+
+      if (response?.success) {
         setMessage('Danke für Ihre Buchungsanfrage!');
         setBookingNoticeOpen(true);
         setSelectedSlotId(null);
       } else {
-        setMessage(response.message || 'Buchung fehlgeschlagen');
+        setMessage(response?.message || 'Buchung fehlgeschlagen');
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Fehler beim Buchen';
@@ -76,7 +121,7 @@ export const useBooking = (selectedTeacherId: number | null, eventId?: number | 
     } finally {
       setLoading(false);
     }
-  }, [selectedSlotId, eventId]);
+  }, [selectedSlotId, selectedTeacherId, eventId, slots]);
 
   const resetSelection = useCallback(() => {
     setSelectedSlotId(null);

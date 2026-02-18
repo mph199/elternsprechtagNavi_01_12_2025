@@ -42,6 +42,31 @@ export interface BookingFormData {
   message?: string;
 }
 
+export interface BookingRequest {
+  id: number;
+  eventId?: number | null;
+  teacherId: number;
+  requestedTime: string;
+  date: string;
+  status: 'requested' | 'accepted' | 'declined';
+  verifiedAt?: string | null;
+  confirmationSentAt?: string | null;
+  assignedSlotId?: number | null;
+  visitorType: 'parent' | 'company';
+  parentName?: string | null;
+  companyName?: string | null;
+  studentName?: string | null;
+  traineeName?: string | null;
+  representativeName?: string | null;
+  className: string;
+  email: string;
+  message?: string | null;
+  assignableTimes?: string[];
+  availableTimes?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Settings {
   id?: number;
   event_name: string;

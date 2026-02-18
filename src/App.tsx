@@ -11,8 +11,9 @@ import { AdminUsers } from './pages/AdminUsers';
 import { AdminFeedback } from './pages/AdminFeedback';
 import { TeacherLayout } from './pages/teacher/TeacherLayout';
 import { TeacherBookings } from './pages/teacher/TeacherBookings';
+import { TeacherRequests } from './pages/teacher/TeacherRequests';
+import { TeacherHome } from './pages/teacher/TeacherHome';
 import { TeacherPassword } from './pages/teacher/TeacherPassword';
-import { TeacherRoom } from './pages/teacher/TeacherRoom';
 import { TeacherFeedback } from './pages/teacher/TeacherFeedback';
 import { Impressum } from './pages/Impressum';
 import { Datenschutz } from './pages/Datenschutz';
@@ -57,11 +58,12 @@ function App() {
                   </ProtectedRoute>
                 }
               >
-                <Route index element={<Navigate to="/teacher/bookings" replace />} />
+                <Route index element={<TeacherHome />} />
+                <Route path="requests" element={<TeacherRequests />} />
                 <Route path="bookings" element={<TeacherBookings />} />
                 <Route path="password" element={<TeacherPassword />} />
-                <Route path="room" element={<TeacherRoom />} />
                 <Route path="feedback" element={<TeacherFeedback />} />
+                <Route path="*" element={<Navigate to="/teacher" replace />} />
               </Route>
 
               {/* Admin-Bereich ist immer erreichbar, auch im Maintenance-Modus */}
