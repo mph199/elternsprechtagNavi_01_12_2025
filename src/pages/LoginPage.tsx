@@ -25,12 +25,12 @@ export function LoginPage() {
         if (u.teacherId) {
           const stored = localStorage.getItem('active_view');
           const preferred = stored === 'teacher' ? 'teacher' : 'admin';
-          navigate(preferred === 'teacher' ? '/teacher/bookings' : '/admin', { replace: true });
+          navigate(preferred === 'teacher' ? '/teacher' : '/admin', { replace: true });
         } else {
           navigate('/admin', { replace: true });
         }
       } else if (u?.role === 'teacher') {
-        navigate('/teacher/bookings', { replace: true });
+        navigate('/teacher', { replace: true });
       } else {
         navigate('/', { replace: true });
       }

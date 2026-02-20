@@ -166,13 +166,22 @@
 }
 
 .dropdown__hint {
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   font-weight: 800;
-  color: rgba(6, 95, 70, 0.9);
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  padding: 0.15rem 0.5rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+
+  padding: 0.16rem 0.5rem;
   border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  color: rgba(var(--brand-ink-rgb), 0.78);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
 .dropdown__note {

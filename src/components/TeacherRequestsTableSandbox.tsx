@@ -307,7 +307,7 @@ export function TeacherRequestsTableSandbox({
         ) : requests.map((request, index) => {
           const assignableSlots = getAssignableTimes(request);
           const groupedTimes = splitTimesByRequestedWindow(assignableSlots, request.requestedTime);
-          const selectedAssignable = selectedAssignTimes[request.id] || assignableSlots[0] || '';
+          const selectedAssignable = selectedAssignTimes[request.id] || '';
           const teacherMessage = teacherMessages[request.id] || '';
           const isParent = request.visitorType === 'parent';
           const accentClass = CARD_ACCENT_CLASSES[index % CARD_ACCENT_CLASSES.length];
@@ -345,6 +345,9 @@ export function TeacherRequestsTableSandbox({
                         onChange={(event) => onAssignTimeChange(request.id, event.target.value)}
                         disabled={assignableSlots.length === 0}
                       >
+                        <option value="" disabled>
+                          Bitte Zeitslot auswählen, der vergeben werden soll.
+                        </option>
                         <optgroup label="Innerhalb des angefragten Zeitraums">
                           {groupedTimes.inside.length > 0 ? (
                             groupedTimes.inside.map((slot) => (
@@ -410,6 +413,8 @@ export function TeacherRequestsTableSandbox({
                     }}
                   >
                     {isMessageExpanded ? 'Weniger anzeigen' : 'Mehr anzeigen'}
+                  </button>
+                )}
 
                 <div className="sandbox-card__teacher-note">
                   <span>Nachricht an den Ausbildungsbetrieb/Erziehungsberechtigten</span>
@@ -422,8 +427,6 @@ export function TeacherRequestsTableSandbox({
                     rows={3}
                   />
                 </div>
-                  </button>
-                )}
               </div>
             </div>
             <div className="sandbox-card__footer">
@@ -439,8 +442,14 @@ export function TeacherRequestsTableSandbox({
                   type="button"
                   className="sandbox-action-btn"
                   onClick={() => onAcceptRequest(request.id, selectedAssignable || undefined)}
-                  disabled={!request.verifiedAt}
-                  title={!request.verifiedAt ? 'Erst möglich, wenn die E-Mail-Adresse bestätigt wurde' : undefined}
+                  disabled={!request.verifiedAt || (assignableSlots.length > 0 && !selectedAssignable)}
+                  title={
+                    !request.verifiedAt
+                      ? 'Erst möglich, wenn die E-Mail-Adresse bestätigt wurde'
+                      : assignableSlots.length > 0 && !selectedAssignable
+                        ? 'Bitte zuerst einen Zeitslot auswählen'
+                        : undefined
+                  }
                 >
                   Termin vergeben
                 </button>

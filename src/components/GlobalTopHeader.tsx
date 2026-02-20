@@ -26,9 +26,9 @@ export function GlobalTopHeader() {
     if (!showAreaMenu) return null;
 
     if (inTeacher) {
-      if (pathname === '/teacher' || pathname === '/teacher/') return 'Lehrkraft · Start';
+      if (pathname === '/teacher' || pathname === '/teacher/') return 'Lehrkraft · Übersicht';
       if (pathname.includes('/teacher/requests')) return 'Lehrkraft · Anfragen verwalten';
-      if (pathname.includes('/teacher/bookings')) return 'Lehrkraft · Buchungen einsehen';
+      if (pathname.includes('/teacher/bookings')) return 'Lehrkraft · Meine Buchungen';
       if (pathname.includes('/teacher/password')) return 'Lehrkraft · Passwort ändern';
       if (pathname.includes('/teacher/feedback')) return 'Lehrkraft · Feedback senden';
       return 'Lehrkraft';
@@ -97,14 +97,14 @@ export function GlobalTopHeader() {
                     <>
                       <button
                         type="button"
-                        className={pathname === '/teacher' || pathname === '/teacher/' ? 'dropdown__item dropdown__item--active' : 'dropdown__item'}
+                        className={pathname === '/teacher' ? 'dropdown__item dropdown__item--active' : 'dropdown__item'}
                         onClick={() => {
                           navigate('/teacher');
                           close();
                         }}
                       >
-                        <span>Startseite</span>
-                        {(pathname === '/teacher' || pathname === '/teacher/') && <span className="dropdown__hint">Aktiv</span>}
+                        <span>Übersicht</span>
+                        {pathname === '/teacher' && <span className="dropdown__hint">Aktiv</span>}
                       </button>
                       <button
                         type="button"
@@ -114,7 +114,7 @@ export function GlobalTopHeader() {
                           close();
                         }}
                       >
-                        <span>Anfragen verwalten</span>
+                        <span>Anfragen einsehen</span>
                         {pathname === '/teacher/requests' && <span className="dropdown__hint">Aktiv</span>}
                       </button>
                       <button
@@ -125,7 +125,7 @@ export function GlobalTopHeader() {
                           close();
                         }}
                       >
-                        <span>Buchungen einsehen</span>
+                        <span>Meine Buchungen</span>
                         {pathname === '/teacher/bookings' && <span className="dropdown__hint">Aktiv</span>}
                       </button>
                       <button
@@ -231,7 +231,7 @@ export function GlobalTopHeader() {
                         className={(activeView ?? (inTeacher ? 'teacher' : 'admin')) === 'teacher' ? 'dropdown__item dropdown__item--active' : 'dropdown__item'}
                         onClick={() => {
                           setActiveView('teacher');
-                          navigate('/teacher', { replace: true });
+                          navigate('/teacher/bookings', { replace: true });
                           close();
                         }}
                       >

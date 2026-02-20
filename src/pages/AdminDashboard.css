@@ -120,21 +120,22 @@
 
 /* Red variant (used for teacher logout) */
 .logout-button.logout-button-danger {
-  background: #dc3545;
-  border-color: #dc3545;
-  color: white;
+  background: transparent;
+  border: 1.5px solid rgba(185, 28, 28, 0.35);
+  color: #b91c1c;
 }
 
 .logout-button.logout-button-danger:hover {
-  background: #c82333;
-  border-color: #c82333;
-  color: white;
+  background: rgba(185, 28, 28, 0.06);
+  border-color: #b91c1c;
+  color: #b91c1c;
 }
 
-/* Ensure edit buttons inside action rows retain green gradient */
+/* Ensure edit buttons inside action rows use outlined style */
 .action-buttons .edit-button {
-  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%);
-  color: #fff;
+  background: transparent;
+  color: var(--brand-primary-dark, #15803d);
+  border: 1.5px solid rgba(var(--brand-primary-rgb), 0.45);
 }
 
 .admin-main {
@@ -324,11 +325,11 @@
 }
 
 .no-bookings {
-  background: white;
+  background: transparent;
   padding: 3rem;
-  border-radius: 8px;
+  border-radius: 12px;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
 }
 
 .no-bookings p {
@@ -355,9 +356,9 @@
 }
 
 .bookings-table-container {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background: transparent;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
@@ -406,19 +407,20 @@
 }
 
 .cancel-button {
-  background: #dc3545;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  font-weight: 500;
+  background: transparent;
+  color: #b91c1c;
+  border: 1.5px solid rgba(185, 28, 28, 0.35);
+  padding: 0.5rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .cancel-button:hover {
-  background: #c82333;
+  background: rgba(185, 28, 28, 0.06);
+  border-color: #b91c1c;
 }
 
 .header-actions {
@@ -450,12 +452,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
 }
 
-.admin-section-header h2 {
-  font-size: 1.8rem;
-  color: var(--brand-primary);
+.admin-section-header h2,
+.admin-section-header h3 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #111827;
   margin: 0;
 }
 
@@ -486,32 +492,34 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%);
-  color: white;
-  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35em;
+  background: transparent;
+  color: var(--brand-primary-dark, #15803d);
+  border: 1.5px solid rgba(var(--brand-primary-rgb), 0.45);
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 2px 6px rgba(var(--brand-primary-rgb), 0.2);
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(var(--brand-primary-rgb), 0.3);
+  background: rgba(var(--brand-primary-rgb), 0.07);
+  border-color: var(--brand-primary);
+  color: var(--brand-primary-dark, #15803d);
 }
 
 .btn-primary:disabled,
 .btn-primary[disabled] {
-  background: linear-gradient(135deg, rgba(var(--brand-primary-rgb), 0.35) 0%, var(--brand-secondary) 100%);
-  color: #064e3b;
+  background: transparent;
+  color: rgba(var(--brand-primary-rgb), 0.4);
+  border-color: rgba(var(--brand-primary-rgb), 0.2);
   cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
-  border: none;
-  opacity: 1;
+  opacity: 0.7;
 }
 
 .btn-secondary {
@@ -540,8 +548,9 @@
 
 .teacher-form-container h3 {
   margin: 0 0 1.5rem 0;
-  color: var(--brand-primary);
-  font-size: 1.3rem;
+  color: #111827;
+  font-size: 1.25rem;
+  font-weight: 800;
 }
 
 .teacher-form {
@@ -640,11 +649,11 @@
 }
 
 .no-teachers {
-  background: white;
+  background: transparent;
   padding: 3rem;
-  border-radius: 8px;
+  border-radius: 12px;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
 }
 
 .no-teachers p {
@@ -654,9 +663,9 @@
 }
 
 .teachers-table-container {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background: transparent;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
@@ -675,8 +684,9 @@
 
 .btn-secondary--sm {
   padding: 0.4rem 0.7rem;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   border-radius: 6px;
+  gap: 0.3em;
 }
 
 .admin-table-select {
@@ -823,16 +833,27 @@
 
 /* Teacher bookings table polish */
 .admin-dashboard--teacher .teacher-table-section {
-  overflow: hidden;
+  overflow: visible;
 }
 
 .admin-dashboard--teacher .teacher-bookings-table-container {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
+  overflow-x: visible;
+  overflow-y: visible;
 }
 
 .admin-dashboard--teacher .teacher-bookings-table {
-  min-width: 980px;
+  min-width: 0;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.admin-dashboard--teacher .teacher-bookings-table thead th {
+  position: sticky;
+  top: calc(var(--globalTopHeaderHeight, 72px) - 1px);
+  z-index: 2;
+  background: #f8f9fa;
 }
 
 .admin-dashboard--teacher .teacher-bookings-table td {
@@ -840,16 +861,181 @@
   vertical-align: top;
 }
 
+.admin-dashboard--teacher .teacher-bookings-table thead th.teacher-actions-header {
+  text-align: right;
+}
+
+.admin-dashboard--teacher .teacher-bookings-table tbody td.teacher-actions-cell {
+  text-align: right;
+}
+
+.admin-dashboard--teacher .teacher-bookings-table tbody td.teacher-actions-cell .action-buttons {
+  justify-content: flex-end;
+}
+
 .admin-dashboard--teacher .teacher-bookings-table .message-cell {
-  max-width: 260px;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  max-width: 360px;
+  min-width: 140px;
 }
 
 .admin-dashboard--teacher .teacher-bookings-table .teacher-message-value {
-  display: block;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   line-height: 1.4;
   margin: 0;
+  white-space: normal;
+  word-break: break-word;
+  cursor: default;
+}
+
+.admin-dashboard--teacher .teacher-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: #111827;
+  cursor: pointer;
+}
+
+.admin-dashboard--teacher .teacher-sort-button:focus-visible {
+  outline: 3px solid rgba(var(--brand-primary-rgb), 0.35);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.admin-dashboard--teacher .teacher-sort-indicator {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.admin-dashboard--teacher .teacher-sort-indicator--idle {
+  opacity: 0.45;
+}
+
+.admin-dashboard--teacher .teacher-type-pill,
+.admin-dashboard--teacher .teacher-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.18rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  color: rgba(var(--brand-ink-rgb), 0.85);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  width: fit-content;
+}
+
+.admin-dashboard--teacher .teacher-type-pill--parent {
+  border-color: rgba(var(--brand-primary-rgb), 0.30);
+}
+
+.admin-dashboard--teacher .teacher-type-pill--company {
+  border-color: rgba(59, 130, 246, 0.30);
+}
+
+.admin-dashboard--teacher .teacher-status-pill--confirmed {
+  border-color: rgba(var(--brand-primary-rgb), 0.30);
+}
+
+.admin-dashboard--teacher .teacher-status-pill--reserved {
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.admin-dashboard--teacher .teacher-when-cell {
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-dashboard--teacher .teacher-when-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.admin-dashboard--teacher .teacher-when-date {
+  font-weight: 800;
+  color: #111827;
+}
+
+.admin-dashboard--teacher .teacher-when-time {
+  color: #4b5563;
+  font-weight: 700;
+}
+
+.admin-dashboard--teacher .teacher-when-sub {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.45rem;
+}
+
+.admin-dashboard--teacher .teacher-row-id {
+  color: #6b7280;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.admin-dashboard--teacher .teacher-visitor-cell,
+.admin-dashboard--teacher .teacher-student-cell {
+  min-width: 0;
+}
+
+.admin-dashboard--teacher .teacher-visitor-top {
+  margin-bottom: 0.35rem;
+}
+
+.admin-dashboard--teacher .teacher-visitor-name,
+.admin-dashboard--teacher .teacher-student-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 800;
+  color: #111827;
+}
+
+.admin-dashboard--teacher .teacher-visitor-meta,
+.admin-dashboard--teacher .teacher-student-meta {
+  margin-top: 0.25rem;
+  color: #6b7280;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-dashboard--teacher .teacher-visitor-meta--email a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.admin-dashboard--teacher .teacher-visitor-meta--email a:hover {
+  text-decoration: underline;
+}
+
+.admin-dashboard--teacher .teacher-cell-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Allow wrapping for message cells; truncate only in non-message contexts */
+  white-space: normal;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
 }
 
 .admin-dashboard--teacher .teacher-bookings-table .action-buttons {
@@ -876,61 +1062,98 @@
 
 /* Ensure inline action buttons align nicely inside table cells */
 .edit-button,
-.cancel-button {
+.cancel-button,
+.reset-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.3em;
+  white-space: nowrap;
 }
 
 /* Match confirm (btn-primary) to cancel button sizing within table actions */
 .action-buttons .btn-primary {
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-  border-radius: 4px;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  gap: 0.3em;
 }
 
-/* Make Bearbeiten same size as Bestätigen within action buttons */
+/* Bearbeiten (edit) – green outlined */
 .action-buttons .edit-button {
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-  border-radius: 4px;
-  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%);
-  color: #fff;
-  border: none;
-  font-weight: 600;
-  box-shadow: 0 2px 4px rgba(var(--brand-primary-rgb), 0.2);
-  transition: all 0.25s ease;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--brand-primary-dark, #15803d);
+  border: 1.5px solid rgba(var(--brand-primary-rgb), 0.45);
+  font-weight: 700;
+  transition: all 0.2s;
 }
 
 .action-buttons .edit-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(var(--brand-primary-rgb), 0.3);
+  background: rgba(var(--brand-primary-rgb), 0.07);
+  border-color: var(--brand-primary);
+}
+
+.action-buttons .edit-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Löschen / Stornieren (cancel) – red outlined */
+.action-buttons .cancel-button {
+  padding: 0.5rem 0.85rem;
+  font-size: 0.85rem;
+  border-radius: 6px;
+}
+
+.cancel-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Login zurücksetzen – blue outlined */
+.reset-button {
+  background: transparent;
+  color: #1d4ed8;
+  border: 1.5px solid rgba(29, 78, 216, 0.35);
+  padding: 0.5rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reset-button:hover {
+  background: rgba(29, 78, 216, 0.06);
+  border-color: #1d4ed8;
 }
 
 .logout-button {
-  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%);
-  color: white;
-  border: none;
+  background: transparent;
+  color: var(--brand-primary-dark, #15803d);
+  border: 1.5px solid rgba(var(--brand-primary-rgb), 0.45);
   padding: 0.5rem 0.9rem;
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.2s;
   white-space: nowrap;
-  box-shadow: 0 3px 10px rgba(var(--brand-primary-rgb), 0.2);
 }
 .logout-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(var(--brand-primary-rgb), 0.35);
+  background: rgba(var(--brand-primary-rgb), 0.07);
+  border-color: var(--brand-primary);
 }
 
 @media (max-width: 1200px) {
-  .bookings-table-container {
+  .admin-dashboard:not(.admin-dashboard--teacher) .bookings-table-container {
     overflow-x: auto;
   }
 
-  .bookings-table {
+  .admin-dashboard:not(.admin-dashboard--teacher) .bookings-table {
     min-width: 1000px;
   }
 }
@@ -973,10 +1196,6 @@
 
   .teachers-table-container .action-buttons {
     flex-wrap: wrap;
-  }
-
-  .admin-dashboard--teacher .teacher-bookings-table {
-    min-width: 860px;
   }
 }
 
@@ -1026,7 +1245,7 @@
     min-width: 0;
   }
 
-  .admin-dashboard--teacher .teacher-bookings-table-container:not(.teacher-my-bookings-table-container) {
+  .admin-dashboard--teacher .teacher-bookings-table-container {
     border: none;
     border-radius: 0;
     box-shadow: none;
@@ -1034,21 +1253,21 @@
     overflow: visible;
   }
 
-  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) {
+  .admin-dashboard--teacher .teacher-bookings-table {
     min-width: 0;
     border-collapse: separate;
     border-spacing: 0;
   }
 
-  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) thead {
+  .admin-dashboard--teacher .teacher-bookings-table thead {
     display: none;
   }
 
-  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) tbody {
+  .admin-dashboard--teacher .teacher-bookings-table tbody {
     display: block;
   }
 
-  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) tbody tr {
+  .admin-dashboard--teacher .teacher-bookings-table tbody tr {
     display: block;
     background: white;
     border: 1px solid #d1d5db;
@@ -1059,7 +1278,7 @@
     box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
   }
 
-  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) tbody td {
+  .admin-dashboard--teacher .teacher-bookings-table tbody td {
     display: grid;
     grid-template-columns: minmax(120px, 42%) 1fr;
     gap: 0.65rem;
@@ -1072,110 +1291,60 @@
     overflow-wrap: anywhere;
   }
 
-  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) tbody td.message-cell {
+  .admin-dashboard--teacher .teacher-bookings-table tbody td.message-cell {
     display: grid;
     grid-template-columns: minmax(120px, 42%) 1fr;
     gap: 0.65rem;
     align-items: start;
   }
 
-  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) tbody td.message-cell::before {
+  .admin-dashboard--teacher .teacher-bookings-table tbody td.message-cell::before {
     display: inline;
     margin: 0;
   }
 
-  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) tbody td.message-cell .teacher-message-value {
+  .admin-dashboard--teacher .teacher-bookings-table tbody td.message-cell .teacher-message-value {
     display: block;
     padding: 0.3rem 0.55rem;
     border-radius: 8px;
     background: #f9fafb;
     border: 1px solid #e5e7eb;
     min-height: 0;
+    white-space: normal;
   }
 
-  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) tbody td:last-child {
+  .admin-dashboard--teacher .teacher-bookings-table tbody td:last-child {
     border-bottom: 0;
     padding-bottom: 0;
   }
 
-  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) tbody td::before {
+  .admin-dashboard--teacher .teacher-bookings-table tbody td::before {
     content: attr(data-label);
     font-weight: 700;
     color: #374151;
   }
 
-  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) .action-buttons {
+  .admin-dashboard--teacher .teacher-bookings-table tbody td.teacher-actions-cell {
+    text-align: left;
+  }
+
+  .admin-dashboard--teacher .teacher-bookings-table .action-buttons {
     width: 100%;
   }
 
-  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) .action-buttons > * {
+  .admin-dashboard--teacher .teacher-bookings-table .action-buttons > * {
     flex: 1 1 100%;
     min-width: 0;
   }
 
-  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) .teacher-request-select,
-  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) .action-buttons .btn-primary,
-  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) .action-buttons .cancel-button {
+  .admin-dashboard--teacher .teacher-bookings-table .teacher-request-select,
+  .admin-dashboard--teacher .teacher-bookings-table .action-buttons .btn-primary,
+  .admin-dashboard--teacher .teacher-bookings-table .action-buttons .cancel-button {
     width: 100%;
   }
 
-  .admin-dashboard--teacher .teacher-bookings-table:not(.teacher-my-bookings-table) .tooltip-container {
+  .admin-dashboard--teacher .teacher-bookings-table .tooltip-container {
     width: 100%;
-  }
-
-  .admin-dashboard--teacher .teacher-my-bookings-table-container {
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    overflow-x: auto;
-    overflow-y: auto;
-    max-height: 70vh;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .admin-dashboard--teacher .teacher-my-bookings-table {
-    min-width: 920px;
-    border-collapse: collapse;
-  }
-
-  .admin-dashboard--teacher .teacher-my-bookings-table thead {
-    display: table-header-group;
-    background: #f8f9fa;
-  }
-
-  .admin-dashboard--teacher .teacher-my-bookings-table thead th {
-    position: sticky;
-    top: 0;
-    z-index: 3;
-    background: #f8f9fa;
-  }
-
-  .admin-dashboard--teacher .teacher-my-bookings-table tbody {
-    display: table-row-group;
-  }
-
-  .admin-dashboard--teacher .teacher-my-bookings-table tbody tr {
-    display: table-row;
-  }
-
-  .admin-dashboard--teacher .teacher-my-bookings-table tbody td {
-    display: table-cell;
-    border-bottom: 1px solid #f0f0f0;
-    padding: 0.75rem;
-    white-space: nowrap;
-  }
-
-  .admin-dashboard--teacher .teacher-my-bookings-table tbody td.message-cell {
-    white-space: normal;
-    min-width: 220px;
-  }
-
-  .admin-dashboard--teacher .teacher-my-bookings-table tbody td::before {
-    content: none;
-  }
-
-  .admin-dashboard--teacher .teacher-my-bookings-table .action-buttons {
-    width: auto;
-    flex-wrap: nowrap;
   }
 }
 
@@ -1183,13 +1352,281 @@
 @media (max-width: 768px) {
   .breadcrumbs { flex-wrap: wrap; }
   .action-buttons { flex-wrap: wrap; }
-  .bookings-table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .bookings-table { min-width: 720px; }
-  .bookings-table th, .bookings-table td { padding: 0.6rem 0.75rem; font-size: 0.92rem; }
-  .action-buttons .btn-primary, .action-buttons .edit-button, .action-buttons .cancel-button { padding: 0.5rem 0.75rem; font-size: 0.9rem; }
 
   .admin-grid-2 {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Shared responsive admin table ─── */
+
+.admin-resp-table-container {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  /* overflow must stay visible so that position:sticky on thead th
+     works relative to the viewport scroll, not a local scroll container */
+  overflow: visible;
+}
+
+.admin-resp-table {
+  min-width: 0;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.admin-resp-table thead {
+  background: #f8f9fa;
+}
+
+.admin-resp-table thead th {
+  position: sticky;
+  top: calc(var(--globalTopHeaderHeight, 72px) - 1px);
+  z-index: 2;
+  background: #f8f9fa;
+  text-align: left;
+  padding: 0.85rem 1rem;
+  font-weight: 700;
+  color: #333;
+  border-bottom: 2px solid #e0e0e0;
+  font-size: 0.92rem;
+}
+
+/* Sort buttons inside admin table headers */
+.admin-resp-table .teacher-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #333;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-resp-table .teacher-sort-button:hover {
+  color: var(--brand-primary, #16a34a);
+}
+
+.admin-resp-table .teacher-sort-button:focus-visible {
+  outline: 3px solid rgba(var(--brand-primary-rgb), 0.35);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.admin-resp-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  color: #555;
+  line-height: 1.35;
+  vertical-align: top;
+}
+
+.admin-resp-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.admin-resp-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Compound cell helpers */
+.admin-cell-main {
+  font-weight: 800;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-cell-meta {
+  margin-top: 0.2rem;
+  color: #6b7280;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-cell-meta a {
+  color: inherit;
+  text-decoration: none;
+}
+.admin-cell-meta a:hover {
+  text-decoration: underline;
+}
+
+.admin-cell-id {
+  color: #9ca3af;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+/* Status pills – shared */
+.admin-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.18rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  color: rgba(var(--brand-ink-rgb), 0.85);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  width: fit-content;
+}
+
+.admin-status-pill--success {
+  border-color: rgba(var(--brand-primary-rgb), 0.30);
+}
+
+.admin-status-pill--warning {
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.admin-status-pill--info {
+  border-color: rgba(59, 130, 246, 0.30);
+}
+
+.admin-status-pill--neutral {
+  border-color: rgba(107, 114, 128, 0.25);
+}
+
+/* Right-aligned actions column */
+.admin-resp-table .admin-actions-header {
+  text-align: right;
+}
+
+.admin-resp-table .admin-actions-cell {
+  text-align: right;
+}
+
+.admin-resp-table .admin-actions-cell .action-buttons {
+  justify-content: flex-end;
+}
+
+/* Message cell on desktop */
+.admin-resp-table .admin-message-cell {
+  max-width: 360px;
+  min-width: 140px;
+}
+
+.admin-message-value {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+  white-space: normal;
+  word-break: break-word;
+  cursor: default;
+}
+
+/* ─── Mobile card layout for admin tables ─── */
+@media (max-width: 768px) {
+  .admin-resp-table-container {
+    border: none;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  .admin-resp-table {
+    min-width: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .admin-resp-table thead {
+    display: none;
+  }
+
+  .admin-resp-table tbody {
+    display: block;
+  }
+
+  .admin-resp-table tbody tr {
+    display: block;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-left: 4px solid var(--brand-primary);
+    border-radius: 12px;
+    padding: 0.75rem 0.85rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+  }
+
+  .admin-resp-table tbody td {
+    display: grid;
+    grid-template-columns: minmax(100px, 38%) 1fr;
+    gap: 0.65rem;
+    align-items: start;
+    border: 0;
+    border-bottom: 1px dashed #d1d5db;
+    padding: 0.5rem 0;
+    font-size: 0.92rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: left;
+  }
+
+  .admin-resp-table tbody td:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .admin-resp-table tbody td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: #374151;
+  }
+
+  .admin-resp-table tbody td.admin-actions-cell {
+    text-align: left;
+  }
+
+  .admin-resp-table tbody td.admin-actions-cell .action-buttons {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .admin-resp-table tbody td.admin-actions-cell .action-buttons > * {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .admin-resp-table .admin-cell-main,
+  .admin-resp-table .admin-cell-meta {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-resp-table tbody td.admin-message-cell {
+    display: grid;
+    grid-template-columns: minmax(100px, 38%) 1fr;
+    gap: 0.65rem;
+    align-items: start;
+  }
+
+  .admin-resp-table tbody td.admin-message-cell .admin-message-value {
+    display: block;
+    -webkit-line-clamp: unset;
+    padding: 0.3rem 0.55rem;
+    border-radius: 8px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    white-space: normal;
   }
 }
 

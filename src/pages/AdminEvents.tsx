@@ -214,10 +214,6 @@ export function AdminEvents() {
   return (
     <div className="admin-dashboard">
       <main className="admin-main">
-        <div className="admin-section-header">
-          <h2>Eltern- und Ausbildersprechtage verwalten</h2>
-        </div>
-
         {error && <div className="admin-error">{error}</div>}
         {success && <div className="admin-success">{success}</div>}
 
@@ -395,29 +391,42 @@ export function AdminEvents() {
               </p>
             </div>
           ) : (
-            <div className="bookings-table-container" style={{ marginTop: '0.25rem' }}>
-              <table className="bookings-table">
+            <div className="admin-resp-table-container" style={{ marginTop: '0.25rem' }}>
+              <table className="admin-resp-table">
+                <colgroup>
+                  <col style={{ width: '30%' }} />
+                  <col style={{ width: '28%' }} />
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '30%' }} />
+                </colgroup>
                 <thead>
                   <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Schuljahr</th>
-                    <th>Start</th>
-                    <th>Ende</th>
+                    <th>Event</th>
+                    <th>Zeitraum</th>
                     <th>Status</th>
-                    <th>Aktionen</th>
+                    <th className="admin-actions-header">Aktionen</th>
                   </tr>
                 </thead>
                 <tbody>
                   {events.map((ev) => (
                     <tr key={ev.id} style={ev.id === selectedEventId ? { background: '#f4f7ff' } : undefined}>
-                      <td>#{ev.id}</td>
-                      <td>{ev.name}</td>
-                      <td>{ev.school_year}</td>
-                      <td>{formatEventDateTime(ev.starts_at)}</td>
-                      <td>{formatEventDateTime(ev.ends_at)}</td>
-                      <td>{ev.status}</td>
-                      <td>
+                      <td data-label="Event">
+                        <span className="admin-cell-main">{ev.name}</span>
+                        <span className="admin-cell-meta">{ev.school_year}</span>
+                        <span className="admin-cell-id">#{ev.id}</span>
+                      </td>
+                      <td data-label="Zeitraum">
+                        <span className="admin-cell-main">{formatEventDateTime(ev.starts_at)}</span>
+                        <span className="admin-cell-meta">bis {formatEventDateTime(ev.ends_at)}</span>
+                      </td>
+                      <td data-label="Status">
+                        <span className={`admin-status-pill admin-status-pill--${
+                          ev.status === 'published' ? 'success' : ev.status === 'closed' ? 'neutral' : 'warning'
+                        }`}>
+                          {ev.status === 'published' ? 'Veröffentlicht' : ev.status === 'closed' ? 'Geschlossen' : 'Entwurf'}
+                        </span>
+                      </td>
+                      <td data-label="Aktionen" className="admin-actions-cell">
                         <div className="action-buttons action-buttons--compact">
                           <button type="button" className="btn-secondary btn-secondary--sm" onClick={() => setSelectedEventId(ev.id)}>
                             Auswählen
@@ -431,7 +440,7 @@ export function AdminEvents() {
                             Entwurf
                           </button>
                           <button type="button" className="btn-secondary btn-secondary--sm" onClick={() => handleDelete(ev.id)}>
-                            Löschen
+                            <span aria-hidden="true">✕</span> Löschen
                           </button>
                         </div>
                       </td>

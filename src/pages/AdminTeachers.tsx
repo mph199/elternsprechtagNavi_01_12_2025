@@ -166,57 +166,31 @@ export function AdminTeachers() {
     );
   }
 
+  const filteredTeachers = teachers.filter((t) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    const name = (t.name || '').toLowerCase();
+    const email = (t.email || '').toLowerCase();
+    const room = (t.room || '').toLowerCase();
+    return name.includes(q) || email.includes(q) || room.includes(q);
+  });
+
   return (
     <div className="admin-dashboard">
       <main className="admin-main">
-        <div className="admin-section-header">
-          <h2>Lehrkräfte verwalten</h2>
-          {!showForm && (
-            <button 
-              onClick={() => setShowForm(true)} 
-              className="btn-primary"
-            >
-              + Neue Lehrkraft
-            </button>
-          )}
-        </div>
-
-        {!showForm && (
-          <div className="admin-teacher-search">
-            <label htmlFor="teacherAdminSearch" className="admin-teacher-search-label">
-              Suche
-            </label>
-            <div className="admin-teacher-search-row">
-              <input
-                id="teacherAdminSearch"
-                className="admin-teacher-search-input"
-                type="text"
-                placeholder="Name, E-Mail oder Raum…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              {search && (
-                <button
-                  type="button"
-                  className="btn-secondary btn-secondary--sm"
-                  onClick={() => setSearch('')}
-                >
-                  Löschen
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <div className="admin-error">
-            {error}
-          </div>
-        )}
-
-        {showForm && (
+        {showForm ? (
           <div className="teacher-form-container">
             <h3>{editingTeacher ? 'Lehrkraft bearbeiten' : 'Neue Lehrkraft anlegen'}</h3>
+
+            {createdCreds && !editingTeacher && (
+              <div className="admin-success">
+                <p>
+                  Login erstellt: <strong>{createdCreds.username}</strong> (Temp-Passwort:{' '}
+                  <strong>{createdCreds.tempPassword}</strong>)
+                </p>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="teacher-form">
               <div className="form-group">
                 <label htmlFor="name">Name</label>
@@ -261,20 +235,22 @@ export function AdminTeachers() {
                   onChange={(e) => setFormData({ ...formData, system: e.target.value as 'dual' | 'vollzeit' })}
                   required
                 >
-                  <option value="dual">Duales System (16:00 - 18:00 Uhr)</option>
-                  <option value="vollzeit">Vollzeit System (17:00 - 19:00 Uhr)</option>
+                  <option value="dual">Dual</option>
+                  <option value="vollzeit">Vollzeit</option>
                 </select>
               </div>
+
               <div className="form-group">
-                <label htmlFor="room">Raum</label>
+                <label htmlFor="room">Raum (optional)</label>
                 <input
                   id="room"
                   type="text"
                   value={formData.room}
                   onChange={(e) => setFormData({ ...formData, room: e.target.value })}
-                  placeholder="z.B. Raum 101"
+                  placeholder="z.B. A-123"
                 />
               </div>
+
               {!editingTeacher && (
                 <>
                   <div className="form-group">
@@ -284,155 +260,160 @@ export function AdminTeachers() {
                       type="text"
                       value={formData.username}
                       onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                      placeholder="z.B. herrhuhn"
+                      placeholder="z.B. vorname.nachname"
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="password">Passwort (optional, min. 8 Zeichen)</label>
+                    <label htmlFor="password">Passwort (optional)</label>
                     <input
                       id="password"
-                      type="password"
+                      type="text"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      placeholder="z.B. sicherespasswort"
+                      placeholder="leer lassen für Auto-Generierung"
                     />
                   </div>
                 </>
               )}
+
               <div className="form-actions">
                 <button type="submit" className="btn-primary">
                   {editingTeacher ? 'Speichern' : 'Anlegen'}
                 </button>
-                <button type="button" onClick={handleCancel} className="btn-secondary">
+                <button type="button" className="btn-secondary" onClick={handleCancel}>
                   Abbrechen
                 </button>
               </div>
             </form>
-            {!editingTeacher && createdCreds && (
-              <div className="admin-success" style={{ marginTop: '1rem' }}>
-                <div style={{ fontWeight: 700, marginBottom: '0.5rem' }}>Login für Lehrkraft erstellt</div>
-                <div><strong>Benutzername:</strong> {createdCreds.username}</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span><strong>Temporäres Passwort:</strong> {createdCreds.tempPassword}</span>
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => {
-                      try {
-                        navigator.clipboard.writeText(createdCreds.tempPassword);
-                        alert('Passwort kopiert');
-                      } catch {
-                        // ignore
-                      }
-                    }}
-                    style={{ padding: '0.35rem 0.6rem', fontSize: '0.85rem' }}
-                  >
-                    Kopieren
-                  </button>
-                </div>
-                <div style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
-                  Bitte sicher weitergeben und nach dem ersten Login ändern.
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {teachers.filter((t) => {
-          const q = search.trim().toLowerCase();
-          if (!q) return true;
-          const name = (t.name || '').toLowerCase();
-          const email = (t.email || '').toLowerCase();
-          const room = (t.room || '').toLowerCase();
-          return name.includes(q) || email.includes(q) || room.includes(q);
-        }).length === 0 ? (
-          <div className="no-teachers">
-            <p>Keine Lehrkräfte vorhanden.</p>
           </div>
         ) : (
-          <div className="teachers-table-container">
-            <table className="bookings-table">
-              <thead>
-                <tr>
-                  <th className="col-id">ID</th>
-                  <th className="col-name">Name</th>
-                  <th className="col-salutation">Anrede</th>
-                  <th className="col-email">E-Mail</th>
-                  <th className="col-system">System</th>
-                  <th className="col-officehours">Sprechstunde</th>
-                  <th className="col-room">Raum</th>
-                  <th className="col-actions">Aktionen</th>
-                </tr>
-              </thead>
-              <tbody>
-                {teachers
-                  .filter((t) => {
-                    const q = search.trim().toLowerCase();
-                    if (!q) return true;
-                    const name = (t.name || '').toLowerCase();
-                    const email = (t.email || '').toLowerCase();
-                    const room = (t.room || '').toLowerCase();
-                    return name.includes(q) || email.includes(q) || room.includes(q);
-                  })
-                  .map((teacher) => (
-                  <tr key={teacher.id}>
-                    <td className="col-id">{teacher.id}</td>
-                    <td className="teacher-name col-name">{teacher.name}</td>
-                    <td className="col-salutation">{teacher.salutation || '-'}</td>
-                    <td className="col-email">{teacher.email || '-'}</td>
-                    <td className="col-system">
-                      <select
-                        className="admin-table-select"
-                        value={(teacher.system || 'dual') as 'dual' | 'vollzeit'}
-                        onChange={(e) => handleInlineSystemChange(teacher, e.target.value as 'dual' | 'vollzeit')}
-                        disabled={!!systemSaving[teacher.id]}
-                        aria-label={`System für ${teacher.name}`}
-                        title={systemSaving[teacher.id] ? 'Speichere…' : undefined}
-                      >
-                        <option value="dual">Dual</option>
-                        <option value="vollzeit">Vollzeit</option>
-                      </select>
-                    </td>
-                    <td className="col-officehours">{teacher.system === 'vollzeit' ? '17:00 - 19:00 Uhr' : '16:00 - 18:00 Uhr'}</td>
-                    <td className="col-room">{teacher.room || '-'}</td>
-                    <td className="col-actions">
-                      <div className="action-buttons action-buttons--compact">
-                        <button
-                          onClick={() => handleEdit(teacher)}
-                          className="edit-button"
-                        >
-                          Bearbeiten
-                        </button>
-                        <button
-                          onClick={() => handleDelete(teacher.id, teacher.name)}
-                          className="cancel-button"
-                        >
-                          Löschen
-                        </button>
-                        <button
-                          onClick={async () => {
-                            try {
-                              const res = await api.admin.resetTeacherLogin(teacher.id);
-                              const typed = res as TeacherLoginResponse;
-                              if (typed?.user) {
-                                alert(`Login zurückgesetzt\n\nBenutzername: ${typed.user.username}\nTemporäres Passwort: ${typed.user.tempPassword}`);
-                              } else {
-                                alert('Login zurückgesetzt.');
-                              }
-                            } catch (err) {
-                              alert(err instanceof Error ? err.message : 'Fehler beim Zurücksetzen des Logins');
-                            }
-                          }}
-                          className="edit-button"
-                        >
-                          Login zurücksetzen
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="teacher-form-container">
+            <div className="admin-section-header">
+              <h3>Lehrkräfte verwalten</h3>
+              <button
+                onClick={() => {
+                  setCreatedCreds(null);
+                  setEditingTeacher(null);
+                  setFormData({ name: '', email: '', salutation: 'Herr', system: 'dual', room: '', username: '', password: '' });
+                  setShowForm(true);
+                }}
+                className="btn-primary"
+              >
+                + Neue Lehrkraft
+              </button>
+            </div>
+
+            <div className="admin-teacher-search">
+              <label htmlFor="teacherAdminSearch" className="admin-teacher-search-label">
+                Suche
+              </label>
+              <div className="admin-teacher-search-row">
+                <input
+                  id="teacherAdminSearch"
+                  className="admin-teacher-search-input"
+                  type="text"
+                  placeholder="Name, E-Mail oder Raum…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                {search && (
+                  <button
+                    type="button"
+                    className="btn-secondary btn-secondary--sm"
+                    onClick={() => setSearch('')}
+                  >
+                    Löschen
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {error && <div className="admin-error">{error}</div>}
+
+            {filteredTeachers.length === 0 ? (
+              <div className="no-teachers">
+                <p>Keine Lehrkräfte vorhanden.</p>
+              </div>
+            ) : (
+              <div className="admin-resp-table-container">
+                <table className="admin-resp-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '24%' }}>Lehrkraft</th>
+                      <th style={{ width: '22%' }}>Kontakt</th>
+                      <th style={{ width: '20%' }}>System & Zeiten</th>
+                      <th style={{ width: '10%' }}>Raum</th>
+                      <th className="admin-actions-header" style={{ width: '24%' }}>Aktionen</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredTeachers.map((teacher) => (
+                      <tr key={teacher.id}>
+                        <td data-label="Lehrkraft">
+                          <div className="admin-cell-main">{teacher.name}</div>
+                          <div className="admin-cell-meta">{teacher.salutation || '—'}</div>
+                          <div className="admin-cell-id">#{teacher.id}</div>
+                        </td>
+                        <td data-label="Kontakt">
+                          <div className="admin-cell-meta" style={{ marginTop: 0 }} title={teacher.email || ''}>
+                            {teacher.email || '—'}
+                          </div>
+                        </td>
+                        <td data-label="System & Zeiten">
+                          <select
+                            className="admin-table-select"
+                            value={(teacher.system || 'dual') as 'dual' | 'vollzeit'}
+                            onChange={(e) => handleInlineSystemChange(teacher, e.target.value as 'dual' | 'vollzeit')}
+                            disabled={!!systemSaving[teacher.id]}
+                            aria-label={`System für ${teacher.name}`}
+                            title={systemSaving[teacher.id] ? 'Speichere…' : undefined}
+                          >
+                            <option value="dual">Dual</option>
+                            <option value="vollzeit">Vollzeit</option>
+                          </select>
+                          <div className="admin-cell-meta">
+                            {teacher.system === 'vollzeit' ? '17:00 – 19:00 Uhr' : '16:00 – 18:00 Uhr'}
+                          </div>
+                        </td>
+                        <td data-label="Raum">
+                          {teacher.room || '—'}
+                        </td>
+                        <td data-label="Aktionen" className="admin-actions-cell">
+                          <div className="action-buttons action-buttons--compact">
+                            <button onClick={() => handleEdit(teacher)} className="edit-button">
+                              <span aria-hidden="true">✎</span> Bearbeiten
+                            </button>
+                            <button onClick={() => handleDelete(teacher.id, teacher.name)} className="cancel-button">
+                              <span aria-hidden="true">✕</span> Löschen
+                            </button>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const res = await api.admin.resetTeacherLogin(teacher.id);
+                                  const typed = res as TeacherLoginResponse;
+                                  if (typed?.user) {
+                                    alert(
+                                      `Login zurückgesetzt\n\nBenutzername: ${typed.user.username}\nTemporäres Passwort: ${typed.user.tempPassword}`
+                                    );
+                                  } else {
+                                    alert('Login zurückgesetzt.');
+                                  }
+                                } catch (err) {
+                                  alert(err instanceof Error ? err.message : 'Fehler beim Zurücksetzen des Logins');
+                                }
+                              }}
+                              className="reset-button"
+                            >
+                              <span aria-hidden="true">↻</span> Login zurücksetzen
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </main>

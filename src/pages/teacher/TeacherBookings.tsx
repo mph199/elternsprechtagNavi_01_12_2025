@@ -5,6 +5,53 @@ import type { TimeSlot } from '../../types';
 import { exportBookingsToICal } from '../../utils/icalExport';
 import type { TeacherOutletContext } from './TeacherLayout';
 
+type SortKey = 'when' | 'visitor';
+type SortDir = 'asc' | 'desc';
+
+function parseDateValue(value?: string | null): number | null {
+  if (!value) return null;
+  // ISO date: YYYY-MM-DD
+  const iso = /^\d{4}-\d{2}-\d{2}$/;
+  if (iso.test(value)) {
+    const [y, m, d] = value.split('-').map((n) => Number(n));
+    if (!y || !m || !d) return null;
+    return Date.UTC(y, m - 1, d);
+  }
+
+  // German date: DD.MM.YYYY
+  const de = /^\d{2}\.\d{2}\.\d{4}$/;
+  if (de.test(value)) {
+    const [d, m, y] = value.split('.').map((n) => Number(n));
+    if (!y || !m || !d) return null;
+    return Date.UTC(y, m - 1, d);
+  }
+
+  const fallback = new Date(value);
+  return Number.isNaN(fallback.getTime()) ? null : fallback.getTime();
+}
+
+function parseStartMinutes(value?: string | null): number | null {
+  if (!value) return null;
+  const m = value.match(/(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  const hh = Number(m[1]);
+  const mm = Number(m[2]);
+  if (Number.isNaN(hh) || Number.isNaN(mm)) return null;
+  return hh * 60 + mm;
+}
+
+function visitorLabel(b: TimeSlot): string {
+  if (b.visitorType === 'parent') return (b.parentName || '').trim();
+  return (b.companyName || '').trim();
+}
+
+function statusLabel(status?: string | null): string {
+  if (!status) return '—';
+  if (status === 'confirmed') return 'Bestätigt';
+  if (status === 'reserved') return 'Reserviert';
+  return status;
+}
+
 export function TeacherBookings() {
   const { teacher } = useOutletContext<TeacherOutletContext>();
 
@@ -14,6 +61,7 @@ export function TeacherBookings() {
   const [notice, setNotice] = useState<string>('');
   const [query, setQuery] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'parent' | 'company'>('all');
+  const [sort, setSort] = useState<{ key: SortKey | null; dir: SortDir }>({ key: null, dir: 'asc' });
 
   const loadBookings = async () => {
     try {
@@ -38,14 +86,16 @@ export function TeacherBookings() {
       if (typeFilter !== 'all' && b.visitorType !== typeFilter) return false;
       if (!q) return true;
       const hay = [
-        b.parentName,
-        b.companyName,
+        visitorLabel(b),
+        b.representativeName,
         b.studentName,
         b.traineeName,
         b.className,
         b.email,
         b.time,
         b.date,
+        b.message,
+        b.status,
       ]
         .filter(Boolean)
         .join(' ')
@@ -53,6 +103,42 @@ export function TeacherBookings() {
       return hay.includes(q);
     });
   }, [bookings, query, typeFilter]);
+
+  const filteredAndSorted = useMemo(() => {
+    if (!sort.key) return filtered;
+
+    const dir = sort.dir === 'asc' ? 1 : -1;
+    const copy = [...filtered];
+    copy.sort((a, b) => {
+      if (sort.key === 'visitor') {
+        const collator = new Intl.Collator('de', { sensitivity: 'base', numeric: true });
+        return collator.compare(visitorLabel(a), visitorLabel(b)) * dir;
+      }
+
+      const aDate = parseDateValue(a.date);
+      const bDate = parseDateValue(b.date);
+      if (aDate != null && bDate != null && aDate !== bDate) return (aDate - bDate) * dir;
+
+      const aTime = parseStartMinutes(a.time);
+      const bTime = parseStartMinutes(b.time);
+      if (aTime != null && bTime != null && aTime !== bTime) return (aTime - bTime) * dir;
+
+      return (a.id - b.id) * dir;
+    });
+    return copy;
+  }, [filtered, sort.dir, sort.key]);
+
+  const cycleSort = (key: SortKey) => {
+    setSort((prev) => {
+      if (prev.key !== key) return { key, dir: 'asc' };
+      if (prev.dir === 'asc') return { key, dir: 'desc' };
+      return { key: null, dir: 'asc' };
+    });
+  };
+
+  const clearSort = () => {
+    setSort({ key: null, dir: 'asc' });
+  };
 
   const handleCancelBooking = async (booking: TimeSlot) => {
     const slotId = booking.id;
@@ -96,13 +182,13 @@ export function TeacherBookings() {
     setError('');
     setNotice('');
 
-    if (!filtered.length) {
+    if (!filteredAndSorted.length) {
       setNotice('Keine Buchungen zum Exportieren.');
       return;
     }
 
     exportBookingsToICal(
-      filtered.map((b) => ({ ...b, teacherName: teacher?.name || 'Lehrkraft' })),
+      filteredAndSorted.map((b) => ({ ...b, teacherName: teacher?.name || 'Lehrkraft' })),
       undefined,
       { defaultRoom: teacher?.room }
     );
@@ -171,9 +257,16 @@ export function TeacherBookings() {
       <section className="stat-card teacher-table-section" style={{ padding: '1.1rem 1.1rem', marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: '1rem' }}>
           <h3 style={{ margin: 0 }}>Buchungen einsehen</h3>
-          <button type="button" className="btn-secondary" onClick={loadBookings}>
-            Aktualisieren
-          </button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            {sort.key && (
+              <button type="button" className="btn-secondary btn-secondary--sm" onClick={clearSort}>
+                Sortierung zurücksetzen
+              </button>
+            )}
+            <button type="button" className="btn-secondary" onClick={loadBookings}>
+              Aktualisieren
+            </button>
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end', marginBottom: '1rem' }}>
@@ -182,7 +275,7 @@ export function TeacherBookings() {
           </button>
         </div>
 
-        {filtered.length === 0 ? (
+        {filteredAndSorted.length === 0 ? (
           <div className="no-bookings">
             <p>Noch keine Buchungen vorhanden.</p>
           </div>
@@ -191,50 +284,113 @@ export function TeacherBookings() {
             <table className="bookings-table teacher-bookings-table teacher-my-bookings-table">
               <thead>
                 <tr>
-                  <th>Datum</th>
-                  <th>Zeit</th>
-                  <th>Typ</th>
-                  <th>Name</th>
+                  <th
+                    aria-sort={sort.key === 'when' ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                  >
+                    <button
+                      type="button"
+                      className="teacher-sort-button"
+                      onClick={() => cycleSort('when')}
+                      aria-label="Nach Termin sortieren"
+                    >
+                      Termin
+                      {sort.key === 'when' ? (
+                        <span className="teacher-sort-indicator" aria-hidden="true">
+                          {sort.dir === 'asc' ? '▲' : '▼'}
+                        </span>
+                      ) : (
+                        <span className="teacher-sort-indicator teacher-sort-indicator--idle" aria-hidden="true">
+                          ↕
+                        </span>
+                      )}
+                    </button>
+                  </th>
+                  <th
+                    aria-sort={sort.key === 'visitor' ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                  >
+                    <button
+                      type="button"
+                      className="teacher-sort-button"
+                      onClick={() => cycleSort('visitor')}
+                      aria-label="Nach Besuchenden sortieren"
+                    >
+                      Besuchende
+                      {sort.key === 'visitor' ? (
+                        <span className="teacher-sort-indicator" aria-hidden="true">
+                          {sort.dir === 'asc' ? '▲' : '▼'}
+                        </span>
+                      ) : (
+                        <span className="teacher-sort-indicator teacher-sort-indicator--idle" aria-hidden="true">
+                          ↕
+                        </span>
+                      )}
+                    </button>
+                  </th>
                   <th>Schüler*in/Azubi</th>
-                  <th>Klasse</th>
-                  <th>E-Mail</th>
                   <th>Nachricht</th>
-                  <th>Aktionen</th>
+                  <th className="teacher-actions-header">Aktionen</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((booking) => (
+                {filteredAndSorted.map((booking) => (
                   <tr key={booking.id}>
-                    <td data-label="Datum">{booking.date}</td>
-                    <td data-label="Zeit">{booking.time}</td>
-                    <td data-label="Typ">
-                      {booking.visitorType === 'parent' ? (
-                        <span className="badge badge-parent">Erziehungsberechtigte</span>
-                      ) : (
-                        <span className="badge badge-company">Ausbildungsbetrieb</span>
-                      )}
+                    <td data-label="Termin" className="teacher-when-cell">
+                      <div className="teacher-when-main">
+                        <span className="teacher-when-date">{booking.date}</span>
+                        <span className="teacher-when-time">{booking.time}</span>
+                      </div>
+                      <div className="teacher-when-sub">
+                        <span
+                          className={
+                            booking.status === 'confirmed'
+                              ? 'teacher-status-pill teacher-status-pill--confirmed'
+                              : booking.status === 'reserved'
+                                ? 'teacher-status-pill teacher-status-pill--reserved'
+                                : 'teacher-status-pill teacher-status-pill--reserved'
+                          }
+                        >
+                          {statusLabel(booking.status)}
+                        </span>
+                      </div>
                     </td>
-                    <td data-label="Name">
-                      {booking.visitorType === 'parent' ? (
-                        booking.parentName
-                      ) : (
-                        <div>
-                          <div>{booking.companyName}</div>
-                          {booking.representativeName && (
-                            <small>Vertreter*in: {booking.representativeName}</small>
-                          )}
+
+                    <td data-label="Besuchende" className="teacher-visitor-cell">
+                      <div className="teacher-visitor-name" title={visitorLabel(booking)}>
+                        {visitorLabel(booking) || '—'}
+                      </div>
+                      {booking.visitorType === 'company' && booking.representativeName && (
+                        <div className="teacher-visitor-meta" title={booking.representativeName}>
+                          Vertreter*in: {booking.representativeName}
+                        </div>
+                      )}
+                      {booking.email && (
+                        <div className="teacher-visitor-meta teacher-visitor-meta--email" title={booking.email}>
+                          <a href={`mailto:${booking.email}`} aria-label={`E-Mail an ${visitorLabel(booking) || 'Besuchende'} senden`}>
+                            {booking.email}
+                          </a>
                         </div>
                       )}
                     </td>
-                    <td data-label="Schüler*in/Azubi">{booking.visitorType === 'parent' ? booking.studentName : booking.traineeName}</td>
-                    <td data-label="Klasse">{booking.className}</td>
-                    <td data-label="E-Mail">
-                      <a href={`mailto:${booking.email}`}>{booking.email}</a>
+
+                    <td data-label="Schüler*in/Azubi" className="teacher-student-cell">
+                      <div className="teacher-student-name" title={booking.visitorType === 'parent' ? booking.studentName : booking.traineeName}>
+                        {booking.visitorType === 'parent' ? booking.studentName : booking.traineeName}
+                      </div>
+                      <div className="teacher-student-meta" title={booking.className}>
+                        Klasse: {booking.className || '—'}
+                      </div>
                     </td>
+
                     <td className="message-cell" data-label="Nachricht">
-                      <span className="teacher-message-value">{booking.message || '-'}</span>
+                      <span
+                        className="teacher-message-value teacher-cell-truncate"
+                        title={booking.message || ''}
+                      >
+                        {booking.message || '—'}
+                      </span>
                     </td>
-                    <td data-label="Aktionen">
+
+                    <td data-label="Aktionen" className="teacher-actions-cell">
                       <div className="action-buttons">
                         {booking.status === 'reserved' && (
                           <div className="tooltip-container">
@@ -243,7 +399,7 @@ export function TeacherBookings() {
                               className="btn-primary"
                               disabled={!booking.verifiedAt}
                             >
-                              Bestätigen
+                              <span aria-hidden="true">✓</span> Bestätigen
                             </button>
                             {!booking.verifiedAt && (
                               <span className="tooltip">
@@ -253,7 +409,7 @@ export function TeacherBookings() {
                           </div>
                         )}
                         <button onClick={() => handleCancelBooking(booking)} className="cancel-button">
-                          Stornieren
+                          <span aria-hidden="true">✕</span> Stornieren
                         </button>
                       </div>
                     </td>

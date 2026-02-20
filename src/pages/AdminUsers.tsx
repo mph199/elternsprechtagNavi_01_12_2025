@@ -131,86 +131,94 @@ export function AdminUsers() {
 
         {flash && <div className="admin-success">{flash}</div>}
 
-        <div className="admin-section-header">
-          <h2>Benutzer & Rechte verwalten</h2>
-          <div className="admin-users-header-actions">
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={loadUsers}
-            >
-              Aktualisieren
-            </button>
-          </div>
-        </div>
-
-        {error && <div className="admin-error">{error}</div>}
-
-        <div className="admin-users-toolbar">
-          <div className="admin-users-stats" aria-label="Benutzerstatistik">
-            <div className="admin-users-stat">
-              <div className="admin-users-stat__label">Gesamt</div>
-              <div className="admin-users-stat__value">{stats.total}</div>
-            </div>
-            <div className="admin-users-stat">
-              <div className="admin-users-stat__label">Admins</div>
-              <div className="admin-users-stat__value">{stats.adminCount}</div>
-            </div>
-            <div className="admin-users-stat">
-              <div className="admin-users-stat__label">Lehrkräfte</div>
-              <div className="admin-users-stat__value">{stats.teacherCount}</div>
+        <div className="teacher-form-container">
+          <div className="admin-section-header">
+            <h3>Benutzer & Rechte verwalten</h3>
+            <div className="admin-users-header-actions">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={loadUsers}
+              >
+                Aktualisieren
+              </button>
             </div>
           </div>
 
-          <div className="admin-users-controls">
-            <div className="admin-teacher-search" style={{ marginBottom: 0 }}>
-              <label htmlFor="adminUserSearch" className="admin-teacher-search-label">
-                Suche
-              </label>
-              <div className="admin-teacher-search-row">
-                <input
-                  id="adminUserSearch"
-                  className="admin-teacher-search-input"
-                  type="text"
-                  placeholder="Username, Rolle oder Lehrkraft-ID…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
+          {error && <div className="admin-error">{error}</div>}
+
+          <div className="admin-users-toolbar">
+            <div className="admin-users-stats" aria-label="Benutzerstatistik">
+              <div className="admin-users-stat">
+                <div className="admin-users-stat__label">Gesamt</div>
+                <div className="admin-users-stat__value">{stats.total}</div>
+              </div>
+              <div className="admin-users-stat">
+                <div className="admin-users-stat__label">Admins</div>
+                <div className="admin-users-stat__value">{stats.adminCount}</div>
+              </div>
+              <div className="admin-users-stat">
+                <div className="admin-users-stat__label">Lehrkräfte</div>
+                <div className="admin-users-stat__value">{stats.teacherCount}</div>
               </div>
             </div>
 
-            <div className="admin-users-filter">
-              <label htmlFor="adminUserRoleFilter" className="admin-teacher-search-label">
-                Filter
-              </label>
-              <select
-                id="adminUserRoleFilter"
-                className="admin-table-select"
-                value={roleFilter}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (v === 'all' || v === 'admin' || v === 'teacher') {
-                    setRoleFilter(v);
-                  }
-                }}
-              >
-                <option value="all">Alle Rollen</option>
-                <option value="admin">Admins</option>
-                <option value="teacher">Lehrkräfte</option>
-              </select>
+            <div className="admin-users-controls">
+              <div className="admin-teacher-search" style={{ marginBottom: 0 }}>
+                <label htmlFor="adminUserSearch" className="admin-teacher-search-label">
+                  Suche
+                </label>
+                <div className="admin-teacher-search-row">
+                  <input
+                    id="adminUserSearch"
+                    className="admin-teacher-search-input"
+                    type="text"
+                    placeholder="Username, Rolle oder Lehrkraft-ID…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="admin-users-filter">
+                <label htmlFor="adminUserRoleFilter" className="admin-teacher-search-label">
+                  Filter
+                </label>
+                <select
+                  id="adminUserRoleFilter"
+                  className="admin-table-select"
+                  value={roleFilter}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === 'all' || v === 'admin' || v === 'teacher') {
+                      setRoleFilter(v);
+                    }
+                  }}
+                >
+                  <option value="all">Alle Rollen</option>
+                  <option value="admin">Admins</option>
+                  <option value="teacher">Lehrkräfte</option>
+                </select>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="bookings-table-container">
-          <table className="bookings-table">
+          <div className="admin-resp-table-container">
+            <table className="admin-resp-table">
+            <colgroup>
+              <col style={{ width: '30%' }} />
+              <col style={{ width: '16%' }} />
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '20%' }} />
+              <col style={{ width: '20%' }} />
+            </colgroup>
             <thead>
               <tr>
-                <th>Username</th>
+                <th>Benutzer</th>
                 <th>Rolle</th>
                 <th>Lehrkraft-ID</th>
                 <th>Erstellt</th>
-                <th style={{ width: 170 }}>Aktion</th>
+                <th className="admin-actions-header">Aktion</th>
               </tr>
             </thead>
             <tbody>
@@ -228,20 +236,20 @@ export function AdminUsers() {
 
                   return (
                     <tr key={u.id} className={isSelf ? 'admin-users-row--self' : undefined}>
-                      <td>
+                      <td data-label="Benutzer">
                         <div className="admin-users-username">
-                          <span>{u.username}</span>
+                          <span className="admin-cell-main">{u.username}</span>
                           {isSelf && <span className="admin-users-badge" title="Das bist du">Du</span>}
                         </div>
                       </td>
-                      <td>
+                      <td data-label="Rolle">
                         <span className={isAdmin ? 'admin-role-pill admin-role-pill--admin' : 'admin-role-pill admin-role-pill--teacher'}>
                           {isAdmin ? 'Admin' : 'Lehrkraft'}
                         </span>
                       </td>
-                      <td>{u.teacher_id ?? '—'}</td>
-                      <td>{u.created_at ? new Date(u.created_at).toLocaleString('de-DE') : '—'}</td>
-                      <td>
+                      <td data-label="Lehrkraft-ID">{u.teacher_id ?? '—'}</td>
+                      <td data-label="Erstellt">{u.created_at ? new Date(u.created_at).toLocaleString('de-DE') : '—'}</td>
+                      <td data-label="Aktion" className="admin-actions-cell">
                         <div className="admin-users-action">
                           <select
                             className="admin-table-select"
@@ -263,6 +271,7 @@ export function AdminUsers() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </main>
     </div>

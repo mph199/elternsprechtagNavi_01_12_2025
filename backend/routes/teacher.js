@@ -639,6 +639,9 @@ router.get('/info', requireAuth, requireTeacher, async (req, res) => {
  */
 router.put('/room', requireAuth, requireTeacher, async (req, res) => {
   try {
+    // Feature intentionally disabled (historic reasons). Keep endpoint present but unavailable.
+    return res.status(404).json({ error: 'Not found' });
+
     const teacherId = req.user.teacherId;
     if (!teacherId) {
       return res.status(400).json({ error: 'Teacher ID not found in token' });

@@ -85,44 +85,68 @@ export function AdminFeedback() {
   return (
     <div className="admin-dashboard">
       <main className="admin-main">
-        <div className="admin-section-header">
-          <h2>Feedback (anonym)</h2>
-          <div className="admin-feedback-actions">
-            <button type="button" className="btn-secondary btn-secondary--sm" onClick={loadFeedback} disabled={loading}>
-              {loading ? 'Laden…' : 'Aktualisieren'}
-            </button>
-          </div>
-        </div>
-
         {user?.role !== 'admin' ? (
           <div className="admin-error">Nur Admins können Feedback einsehen.</div>
         ) : error ? (
           <div className="admin-error">{error}</div>
         ) : loading ? (
           <div className="teacher-form-container">
+            <div className="admin-section-header">
+              <h3>Feedback (anonym)</h3>
+              <div className="admin-feedback-actions">
+                <button type="button" className="btn-secondary btn-secondary--sm" onClick={loadFeedback} disabled={loading}>
+                  {loading ? 'Laden…' : 'Aktualisieren'}
+                </button>
+              </div>
+            </div>
             <div style={{ color: '#4b5563' }}>Lade Feedback…</div>
           </div>
         ) : visibleRows.length === 0 ? (
           <div className="teacher-form-container">
+            <div className="admin-section-header">
+              <h3>Feedback (anonym)</h3>
+              <div className="admin-feedback-actions">
+                <button type="button" className="btn-secondary btn-secondary--sm" onClick={loadFeedback} disabled={loading}>
+                  {loading ? 'Laden…' : 'Aktualisieren'}
+                </button>
+              </div>
+            </div>
             <div style={{ color: '#4b5563' }}>Noch kein Feedback vorhanden.</div>
           </div>
         ) : (
           <div className="teacher-form-container">
-            <div className="bookings-table-container" style={{ marginTop: 10 }}>
-              <table className="bookings-table">
+            <div className="admin-section-header">
+              <h3>Feedback (anonym)</h3>
+              <div className="admin-feedback-actions">
+                <button type="button" className="btn-secondary btn-secondary--sm" onClick={loadFeedback} disabled={loading}>
+                  {loading ? 'Laden…' : 'Aktualisieren'}
+                </button>
+              </div>
+            </div>
+            <div className="admin-resp-table-container" style={{ marginTop: 10 }}>
+              <table className="admin-resp-table">
+                <colgroup>
+                  <col style={{ width: '18%' }} />
+                  <col style={{ width: '62%' }} />
+                  <col style={{ width: '20%' }} />
+                </colgroup>
                 <thead>
                   <tr>
                     <th>Datum</th>
                     <th>Nachricht</th>
-                    <th>Aktionen</th>
+                    <th className="admin-actions-header">Aktionen</th>
                   </tr>
                 </thead>
                 <tbody>
                   {visibleRows.map((f) => (
                     <tr key={f.id}>
-                      <td>{formatDateTime(f.created_at) || f.created_at}</td>
-                      <td className="message-cell">{f.message}</td>
-                      <td style={{ whiteSpace: 'nowrap' }}>
+                      <td data-label="Datum">
+                        <span className="admin-cell-main">{formatDateTime(f.created_at) || f.created_at}</span>
+                      </td>
+                      <td data-label="Nachricht" className="admin-message-cell">
+                        <span className="admin-message-value">{f.message}</span>
+                      </td>
+                      <td data-label="Aktionen" className="admin-actions-cell">
                         <button
                           type="button"
                           className="cancel-button"
@@ -130,7 +154,7 @@ export function AdminFeedback() {
                           disabled={deletingId === f.id}
                           title="Feedback löschen"
                         >
-                          {deletingId === f.id ? 'Löschen…' : 'Löschen'}
+                          <span aria-hidden="true">✕</span> {deletingId === f.id ? 'Löschen…' : 'Löschen'}
                         </button>
                       </td>
                     </tr>
